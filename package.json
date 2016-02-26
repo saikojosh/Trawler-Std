@@ -19,6 +19,10 @@
     "node"
   ],
   "main": "index.js",
+  "preferGlobal": "true",
+  "bin": {
+    "trawler": "index.js"
+  },
   "author": "Josh Cole <saikojosh@gmail.com> (http://www.JoshuaCole.me)",
   "contributors": [
     {
