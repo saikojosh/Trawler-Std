@@ -18,7 +18,7 @@
     "app",
     "node"
   ],
-  "main": "trawler.js",
+  "main": "index.js",
   "author": "Josh Cole <saikojosh@gmail.com> (http://www.JoshuaCole.me)",
   "contributors": [
     {
