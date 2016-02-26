@@ -36,6 +36,12 @@ function Trawler (inputConfig) {
     }
   }, inputConfig);
 
+  // We can't run ourselves.
+  if (this.config.app.name === 'trawler') {
+    console.error('You can run Trawler on itself.');
+    process.exit(1);
+  }
+
   // Private variables.
   this.hostname              = os.hostname();
   this.numRestarts           = 0;
