@@ -21,7 +21,8 @@ function Trawler (inputConfig) {
     app: {
       name:    'unknown',
       version: 'unknown',
-      mainFile: null
+      mainFile: null,
+      env:      'development'
     },
     trawler: {
       type:           null,

@@ -10,7 +10,8 @@ var boat = new Trawler({
   app: {
     name:     packageJSON.name,
     version:  packageJSON.version,
-    mainFile: packageJSON.main
+    mainFile: packageJSON.main,
+    env:      process.env.NODE_ENV
   },
   trawler: packageJSON.trawler || {}
 });
