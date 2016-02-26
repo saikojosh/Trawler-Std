@@ -1,5 +1,5 @@
 # Trawler
-Trawler is a a simple utility that sits in front of your Node app and performs a number of tasks including:
+Trawler is a simple utility that sits in front of your Node app and performs a number of tasks including:
 * Capturing console output and errors.
 * Streaming the output somewhere (e.g. a file on disk).
 * Daily log rotation.
