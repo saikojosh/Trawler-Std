@@ -79,6 +79,7 @@ FileStream.prototype.createStream = function () {
  * finish(err);
  */
 FileStream.prototype.rotateLogs = function (finish) {
+  finish = finish || function(){};
 
   // Skip if we don't need to rotate.
   if (!this.cfg.rotateLogs) { return finish(null); }
