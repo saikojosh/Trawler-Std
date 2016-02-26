@@ -106,6 +106,79 @@ Trawler.prototype.streams = {
 };
 
 /*
+ * Contains methods for various notification providers.
+ */
+Trawler.prototype.notifications = {
+
+  /*
+   * Notifies via email.
+   */
+  email: {
+
+    cfg: {},
+
+    /*
+     * Setup the mailer.
+     */
+    init: function (notificationCfg) {
+      this.notifications[notificationCfg.type].cfg = notificationCfg;
+    },
+
+    /*
+     * Send an email notification.
+     * finish(err);
+     */
+    notify: function (text, finish) {
+
+    }
+
+  },
+
+  /*
+   * Notifies to a Slack channel.
+   */
+  slack: {
+
+    cfg: {},
+
+    /*
+     * Setup the Slack webhook.
+     */
+    init: function (notificationCfg) {
+      this.notifications['slack'].cfg = notificationCfg;
+    },
+
+    /*
+     * Send a Slack notification.
+     * finish(err);
+     */
+    notify: function (text, finish) {
+      finish = finish || function(){};
+
+      var cfg     = this.notifications['slack'].cfg;
+      var appName = this.config.app.name;
+      var mode    = this.config.app.env.toUpperCase();
+
+      fetch(this.cfg.url, {
+        method: 'GET',
+        body:   JSON.stringify({
+          text:       '[' + appName + '] [' + mode + '] ' + text,
+          username:   cfg.username,
+          icon_emoji: cfg.icon_emoji,
+          icon_url:   cfg.icon_url
+        })
+      })
+      .then(function(res) {
+        return finish(null);
+      });
+
+    }
+
+  }
+
+};
+
+/*
  * Initialises Trawler ready for use and starts the child app.
  * finish(err);
  */
