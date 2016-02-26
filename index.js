@@ -4,7 +4,8 @@
  * TRAWLER (entry point).
  */
 
-var packageJSON = require('./package.json');
+var pathify     = require('path').join;
+var packageJSON = require(pathify(process.cwd(), 'package.json'));
 var Trawler     = require('./Trawler');
 
 // Prepare Trawler.
