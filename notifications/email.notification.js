@@ -15,8 +15,11 @@ var extender = require('object-extender');
  */
 function EmailNotification (options) {
 
-  this.cfg = extender.extend(options.itemConfig, {
-    //private config.
+  this.cfg = extender.extend({
+    // Default values.
+    type: 'email'
+  }, options.itemConfig, {
+    // Private config.
   });
 
 };

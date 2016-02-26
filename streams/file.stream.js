@@ -18,7 +18,15 @@ var extender     = require('object-extender');
  */
 function FileStream (options) {
 
-  this.cfg = extender.extend(options.itemConfig, {
+  this.cfg = extender.extend({
+    // Default values.
+    type:        'file',
+    location:    null,
+    logName:     'crash',
+    rotateLogs:  true,
+    maxBackLogs: 6
+  }, options.itemConfig, {
+    // Private config.
     logDir:      pathify(options.itemConfig.location, options.mainConfig.app.name),
     logFilename: options.itemConfig.logName.toLowerCase() + '.log'
   });

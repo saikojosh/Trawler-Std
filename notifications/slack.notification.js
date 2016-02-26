@@ -15,9 +15,16 @@ var extender = require('object-extender');
  */
 function SlackNotification (options) {
 
-  this.cfg = extender.extend(options.itemConfig, {
-    appName: options.mainConfig.app.name,
-    env:     options.mainConfig.app.env
+  this.cfg = extender.extend({
+    // Default values.
+    type:      'slack',
+    url:       null,
+    username:  'Trawler',
+    iconEmoji: ':anchor:'
+  }, options.itemConfig, {
+    // Private config.
+    appName:   options.mainConfig.app.name,
+    env:       options.mainConfig.app.env
   });
 
 };

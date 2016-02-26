@@ -29,31 +29,6 @@ function Trawler (inputConfig) {
     }
   }, inputConfig);
 
-  // Setup default values for streams array.
-  if (this.config.trawler.streams && this.config.trawler.streams.length) {
-    for (var s = 0, slen = this.config.trawler.streams.length ; s < slen ; s++) {
-      this.config.trawler.streams[s] = extender.defaults({
-        type:     null,
-        location: null,
-        logName:  null
-      }, this.config.trawler.streams[s]);
-    }
-  } else {
-    this.config.trawler.streams = null;
-  }
-
-  // Setup default values for notifications array.
-  if (this.config.trawler.notifications && this.config.trawler.notifications.length) {
-    for (var n = 0, nlen = this.config.trawler.notifications.length ; n < nlen ; n++) {
-      this.config.trawler.notifications[n] = extender.defaults({
-        type: null,
-        url:  null
-      }, this.config.trawler.notifications[n]);
-    }
-  } else {
-    this.config.trawler.notifications = null;
-  }
-
   // We can't run ourselves.
   if (this.config.app.name === 'trawler') {
     console.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
