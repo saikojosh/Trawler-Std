@@ -4,6 +4,7 @@
  */
 
 var fs           = require('fs');
+var pathify      = require('path').join;
 var async        = require('async');
 var binaryReader = require('binary-reader');
 var escapeRegExp = require('escape-regexp');
