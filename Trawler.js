@@ -2,14 +2,11 @@
  * TRAWLER (class).
  */
 
-var fs           = require('fs');
-var os           = require('os');
-var stream       = require('stream');
-var async        = require('async');
-var escapeRegExp = require('escape-regexp');
-var fetch        = require('node-fetch');
-var extender     = require('object-extender');
-var moment       = require('moment');
+var os       = require('os');
+var stream   = require('stream');
+var async    = require('async');
+var extender = require('object-extender');
+var moment   = require('moment');
 
 /*
  * Constructor.
@@ -25,34 +22,49 @@ function Trawler (inputConfig) {
       env:      'development'
     },
     trawler: {
-      type:           null,
-      location:       null,
-      logName:        null,
-      rotateLogs:     true,
-      maxBackLogs:    6,
       restartOnError: null,
       maxRestarts:    5,
+      streams:        [],
       notifications:  []
     }
   }, inputConfig);
 
+  // Setup default values for streams array.
+  if (this.config.trawler.streams && this.config.trawler.streams.length) {
+    for (var s = 0, slen = this.config.trawler.streams.length ; s < slen ; s++) {
+      this.config.trawler.streams[s] = extender.defaults({
+        type:     null,
+        location: null,
+        logName:  null
+      }, this.config.trawler.streams[s]);
+    }
+  } else {
+    this.config.trawler.streams = null;
+  }
+
+  // Setup default values for notifications array.
+  if (this.config.trawler.notifications && this.config.trawler.notifications.length) {
+    for (var n = 0, nlen = this.config.trawler.notifications.length ; n < nlen ; n++) {
+      this.config.trawler.notifications[n] = extender.defaults({
+        type: null,
+        url:  null
+      }, this.config.trawler.notifications[n]);
+    }
+  } else {
+    this.config.trawler.notifications = null;
+  }
+
   // We can't run ourselves.
   if (this.config.app.name === 'trawler') {
-    console.error('You can run Trawler on itself.');
+    console.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
     process.exit(1);
   }
 
   // Private variables.
-  this.hostname              = os.hostname();
-  this.numRestarts           = 0;
-  this.internalStream        = new stream.PassThrough();
-  this.externalStream        = null;
-  this.childApp              = null;
-  this.logDir                = null;
-  this.logFilename           = this.config.trawler.logName.toLowerCase() + '.log';
-  this.canRotateLogs         = false;
-  this.rotateTimeout         = null;
-  this.externalStreamManager = this.streams[this.config.trawler.type];
+  this.hostname       = os.hostname();
+  this.numRestarts    = 0;
+  this.internalStream = new stream.PassThrough();
+  this.childApp       = null;
 
 };
 
@@ -60,128 +72,15 @@ function Trawler (inputConfig) {
  * Contains the various supported streams for logs.
  */
 Trawler.prototype.streams = {
-
-  /*
-   * Streams output logs to disk.
-   */
-  file: {
-
-    /*
-     * Initialise the stream ready for creation.
-     * callback(err);
-     */
-    init: function (finish) {
-
-      // Build the dir path.
-      this.logDir = pathify(
-        __dirname,
-        this.config.trawler.location,
-        this.config.app.name
-      );
-
-      // Yes, we can rotate file-based logs.
-      this.canRotateLogs = true;
-
-      // Create the app log dir.
-      var that = this;
-      fs.mkdir(this.logDir, function (err) {
-
-        // Ignore dir exists error.
-        if (err && err.code !== 'EEXIST') { return finish(err); }
-
-        // Create the initial stream.
-        that.externalStreamManager.createStream.call(that);
-
-        return finish(null);
-
-      });
-
-    },
-
-    /*
-     * Create a new stream of this type.
-     */
-    createStream: function () {
-      this.externalStream = fs.createWriteStream(this.logFilename, {
-        flags: 'a'
-      });
-    }
-
-  }
-
+  file: require('./streams/file.stream.js')
 };
 
 /*
  * Contains methods for various notification providers.
  */
 Trawler.prototype.notifications = {
-
-  /*
-   * Notifies via email.
-   */
-  email: {
-
-    cfg: {},
-
-    /*
-     * Setup the mailer.
-     */
-    init: function (notificationCfg) {
-      this.notifications[notificationCfg.type].cfg = notificationCfg;
-    },
-
-    /*
-     * Send an email notification.
-     * finish(err);
-     */
-    notify: function (text, finish) {
-
-    }
-
-  },
-
-  /*
-   * Notifies to a Slack channel.
-   */
-  slack: {
-
-    cfg: {},
-
-    /*
-     * Setup the Slack webhook.
-     */
-    init: function (notificationCfg) {
-      this.notifications['slack'].cfg = notificationCfg;
-    },
-
-    /*
-     * Send a Slack notification.
-     * finish(err);
-     */
-    notify: function (text, finish) {
-      finish = finish || function(){};
-
-      var cfg     = this.notifications['slack'].cfg;
-      var appName = this.config.app.name;
-      var mode    = this.config.app.env.toUpperCase();
-
-      fetch(this.cfg.url, {
-        method: 'GET',
-        body:   JSON.stringify({
-          text:       '[' + appName + '] [' + mode + '] ' + text,
-          username:   cfg.username,
-          icon_emoji: cfg.icon_emoji,
-          icon_url:   cfg.icon_url
-        })
-      })
-      .then(function(res) {
-        return finish(null);
-      });
-
-    }
-
-  }
-
+  email: require('./notifications/email.notification.js'),
+  slack: require('./notifications/slack.notification.js')
 };
 
 /*
@@ -195,32 +94,58 @@ Trawler.prototype.init = function (finish) {
 
   // Setup the stream.
   var that = this;
-  this.externalStreamManager.init.call(this, function (err) {
 
-    if (err) { throw err; }
+  // Initialise each of the streams.
+  this.initSomething('streams', function (err) {
 
-    // Boot the child app after rotating logs.
-    if (that.canRotateLogs && that.config.trawler.rotateLogs) {
+    if (err) { return finish(err); }
 
-      // Rotate on boot.
-      that.rotateLogs(function (err) {
+    // Initialise each of the notifications.
+    that.initSomething('notifications', function (err) {
 
-        if (err) { return finish(err); }
+      if (err) { return finish(err); }
 
-        // Boot the child app.
-        that.startApp();
-        return finish(null);
-
-      });
-
-    }
-
-    // Boot the child app immediately.
-    else {
+      // Boot the child app.
       that.startApp();
       return finish(null);
-    }
 
+    });
+
+  });
+
+};
+
+/*
+ * Initialises either streams or notifications depending on what's given in the
+ * 'what' parameter.
+ * finish(err);
+ */
+Trawler.prototype.initSomething = function (what, finish) {
+
+  // Skip if we have nothing to initialise.
+  if (!this.config.trawler[what]) { return finish(null); }
+
+  var that = this;
+  async.forEachOf(this.config.trawler[what], function (itemConfig, index, nextItem) {
+
+    itemOptions = {
+      mainConfig:     that.config,
+      itemConfig:     itemConfig,
+      internalStream: that.internalStream
+    };
+
+    // Create a new item.
+    that.config.trawler[what][index] = new that[what][itemConfig.type](itemOptions);
+
+    // Initialise the item.
+    that.config.trawler[what][index].init(function (err) {
+      if (err) { return nextItem(err); }
+      return nextItem(null);
+    });
+
+  }, function (err) {
+    if (err) { return finish(err); }
+    return finish(err);
   });
 
 };
@@ -234,23 +159,23 @@ Trawler.prototype.startApp = function () {
   var version = this.config.app.version;
 
   // Add starting message to log.
-  this.output('Starting app "' + appName + '" v' + version + '...');
+  this.output('trawler', 'Starting app "' + appName + '" v' + version + '...');
 
   // Start the application.
-  var child = spawn('node', this.config.app.mainFile, {
+  this.childApp = spawn('node', this.config.app.mainFile, {
     detached: true,
     stdio:    ['ignore', 'pipe', 'pipe']  //stdin, stdout, stderr.
   });
 
   // Allow Trawler to exit independently of the child process.
-  child.unref();
+  this.childApp.unref();
 
   // Handle child quitting and restart it if required.
-  child.on('close', this.onAppCrash.bind(this));
+  this.childApp.on('close', this.onAppCrash.bind(this));
 
   // Prepare stream handlers for child output.
-  child.stdout.on('data', this.output.bind(this));
-  child.stderr.on('data', this.output.bind(this));
+  this.childApp.stdout.on('data', this.output.bind(this, 'app-output'));
+  this.childApp.stderr.on('data', this.output.bind(this, 'app-error'));
 
 };
 
@@ -264,12 +189,12 @@ Trawler.prototype.onAppCrash = function (code, signal) {
   var maxRestarts    = this.config.trawler.maxRestarts;
 
   // Add crash alert to log.
-  this.output('App "' + appName + '" crashed ' + (this.numRestarts + 1) + ' time(s)!');
+  this.output('trawler', 'App "' + appName + '" crashed ' + (this.numRestarts + 1) + ' time(s)!');
 
   // Stop if restart is not allowed.
   if (!restartOnError || (maxRestarts > 0 && this.numRestarts >= maxRestarts)) {
     this.childApp = null;
-    this.output('Max restarts reached. Quitting...', function (err) {
+    this.output('trawler', 'Max restarts reached. Quitting...', function (err) {
       process.exit(1);
     });
   }
@@ -277,7 +202,7 @@ Trawler.prototype.onAppCrash = function (code, signal) {
   this.numRestarts++;
 
   // Add restarting number to log.
-  this.output('Restart #' + this.numRestarts);
+  this.output('trawler', 'Restart #' + this.numRestarts);
 
   // Do the restart.
   return this.start();
@@ -299,12 +224,11 @@ Trawler.prototype.killApp = function () {
  *  output({ ... }, callback);
  *  output('Message here!', callback);
  */
-Trawler.prototype.output = function (options, finish) {
+Trawler.prototype.output = function (entryType, options, finish) {
   options = (typeof options === 'string' ? options = { message: options } : options);
   finish  = finish || function(){};
 
   options = extender.defaults({
-    entryType:  'log',
     message:    null,
     data:       {},
     trawlerErr: null
@@ -317,7 +241,7 @@ Trawler.prototype.output = function (options, finish) {
     pid:        process.pid,
     time:       moment().toISODate(),
     appUptime:  process.uptime() * 1000,  //convert to milliseconds.
-    entryType:  options.entryType,
+    entryType:  entryType,
     message:    options.message,
     data:       options.data || {},
     trawlerErr: options.trawlerErr
@@ -326,176 +250,6 @@ Trawler.prototype.output = function (options, finish) {
   // Write to the stream.
   var json = JSON.stringify(output) + '\n';
   this.internalStream.write(json, finish);
-
-};
-
-/*
- * Renames the old log files and creates a fresh one.
- * finish(err);
- */
-Trawler.prototype.rotateLogs = function (finish) {
-
-  // Skip if we don't need to rotate.
-  if (!this.canRotateLogs || !this.config.trawler.rotateLogs) {
-    return finish(null);
-  }
-
-  var that          = this;
-  var logFileRegStr = '^' + escapeRegExp(this.logFilename + '(?:\.(\d+))?');
-  var logFileRegExp = new RegExp(logFileRegStr);
-
-  async.waterfall([
-
-    function checkRotateTime (next) {
-
-      var firstLine;
-
-      new BufferedReader(that.logFilename, { encoding: 'utf8' })
-      .on('error', function (err) {
-        throw err;
-      })
-      .on('line', function (line) {
-        firstLine = line.replace(/,$/, '');
-        this.interrupt();
-      })
-      .on('end', function () {
-
-        var entry     = JSON.parse(firstLine);
-        var entryTime = moment(entry.time);
-
-        // Drop out here if we do not need to rotate the logs.
-        if (moment().isSame(entryTime, 'day')) { return finish(null); }
-
-        // Otherwise continue.
-        return next(null);
-
-      })
-      .read();
-
-    },
-
-    function corkAndClose (next) {
-
-      // Cork and unlink the internal stream.
-      that.internalStream.cork();
-      that.internalStream.unpipe(that.externalStream);
-
-      // Close the external stream.
-      that.externalStream.end();
-
-      return next(null);
-
-    },
-
-    function readLogDir (next) {
-
-      // Read in the directory so we can check the existing logs.
-      fs.readdir(that.logDir, function (err, files) {
-
-        if (err) { return next(err); }
-
-        var logFiles       = [];
-        var maxLogNum      = null;
-        var maxLogFilename = null;
-
-        // Sort the files, oldest first.
-        files = files.sort(function (a, b) { return a < b; });
-
-        // Check which log files we already have.
-        for (var i = 0, ilen = files.length ; i < ilen ; i++) {
-          var filename = files[i];
-          var match    = logFileRegExp.exec(filename);
-
-          // Skip if the file isn't one of our logs.
-          if (!match) { continue; }
-
-          // Remember each log file we find.
-          logFiles.push(filename);
-          if (i === 0 && match[1]) {
-            maxLogNum      = parseInt(match[1], 10);
-            maxLogFilename = match[0];
-          }
-
-        }
-
-        // Continue.
-        return next(null, logFiles, maxLogNum, maxLogFilename);
-
-      });
-
-    },
-
-    function killOldestLog (logFiles, maxLogNum, maxLogFilename, next) {
-
-      // Skip if we still have one backlog slot remaining.
-      if (maxLogNum < that.maxBackLogs - 1) { return next(null, logFiles); }
-
-      // Remove the first (oldest) log file from the array.
-      logFiles.shift();
-
-      // If we have too many logs, kill the oldest one.
-      fs.unlink(maxLogFilename, function (err) {
-        if (err) { return next(err); }
-        return next(null, logFiles);
-      });
-
-    },
-
-    function renameOtherLogs (logFiles, next) {
-
-      // Reset the RegExp just in case the first string we exec is the same as the previous one.
-      logFileRegExp.exec('');
-
-      async.each(logFiles, function (filename, nextItem) {
-
-        var match = filename.match(logFileRegExp);
-
-        // Do the rename.
-        var newFilename = logFilename + '.' + (parseInt(match[1], 10) + 1);
-        fs.rename(filename, newFilename, function (err) {
-          if (err) { return nextItem(err); }
-          return nextItem(null);
-        });
-
-      }, function (err) {
-        if (err) { return next(err); }
-        return next(null);
-      });
-
-    },
-
-    function uncorkAndOpen () {
-
-      // Open a new external stream.
-      that.externalStreamManager.createStream();
-
-      // Uncork and link the internal stream.
-      that.internalStream.pipe(that.externalStream);
-      that.internalStream.uncork();
-
-      // Chain the next check.
-      that.rotateTimeout = setTimeout(
-        that.rotateLogs.bind(that),
-        that.rotateCheckMS
-      );
-
-      return next(null);
-
-    }
-
-  ], function (err) {
-
-    if (err) { return finish(err); }
-
-    // Schedule the next log rotation.
-    var now        = moment();
-    var waitTimeMS = moment().endOf('day').add(1, 'milliseconds').diff(now);
-    setTimeout(that.rotateLogs.bind(that), waitTimeMS);
-
-    // All done!
-    return finish(null);
-
-  });
 
 };
 
