@@ -1,2 +1,4 @@
 /node_modules/*
+/testapp/node_modules/*
+/testapp/logs/**/*.log
 /nbproject/*
