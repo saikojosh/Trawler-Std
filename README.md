@@ -8,6 +8,7 @@ Trawler is a a simple utility that sits in front of your Node app and performs a
 
 # Setup
 To use Trawler do the following:
+
 1. Install Trawler globally with `npm install trawler -g`.
 2. Setup your _package.json_ as follows:
 ```javascript
