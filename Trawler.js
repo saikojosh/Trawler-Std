@@ -23,7 +23,7 @@ function Trawler (inputConfig) {
     },
     trawler: {
       restartOnError: null,
-      maxRestarts:    5,
+      maxRestarts:    0,
       streams:        [],
       notifications:  []
     }
