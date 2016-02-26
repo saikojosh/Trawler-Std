@@ -21,6 +21,7 @@ To use Trawler do the following:
     "rotateLogs":     true,
     "maxBackLogs":    6,
     "restartOnError": true,
+    "maxRestarts":    5,
     "streams": [{
       "type":     "file",
       "location": "logs",
