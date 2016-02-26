@@ -5,6 +5,7 @@
 
 var fs           = require('fs');
 var async        = require('async');
+var binaryReader = require('binary-reader');
 var escapeRegExp = require('escape-regexp');
 var moment       = require('moment');
 var extender     = require('object-extender');
@@ -90,19 +91,21 @@ FileStream.prototype.rotateLogs = function (finish) {
 
     function checkRotateTime (next) {
 
-      var firstLine;
+      var firstLine = '';
 
-      new BufferedReader(that.cfg.logFilename, { encoding: 'utf8' })
+      binaryReader.open(that.cfg.logFilename)
       .on('error', function (err) {
-        throw err;
+        return finish(err);
       })
-      .on('line', function (line) {
-        firstLine = line.replace(/,$/, '');
-        this.interrupt();
+      .read(1, function (bytesRead, buf, next) {
+        var nextByte = buf.toString();
+        firstLine += nextByte;
+        if (nextByte.match(/\r\n?|\n/)) { this.interrupt(); }
+        return next(null);
       })
-      .on('end', function () {
+      .on('close', function () {
 
-        var entry     = JSON.parse(firstLine);
+        var entry     = JSON.parse(firstLine.replace(/,$/, ''));
         var entryTime = moment(entry.time);
 
         // Drop out here if we do not need to rotate the logs.
@@ -112,7 +115,7 @@ FileStream.prototype.rotateLogs = function (finish) {
         return next(null);
 
       })
-      .read();
+      .close();
 
     },
 
