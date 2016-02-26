@@ -1,0 +1,36 @@
+{
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saikojosh/Trawler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saikojosh/Trawler/issues"
+  },
+  "name": "trawler",
+  "version": "0.0.1",
+  "description": "A simple utility to capture console output of your Node.js app, stream it somewhere, notify an endpoint, and restart your app on failure.",
+  "keywords": [
+    "console",
+    "log",
+    "output",
+    "crash",
+    "restart",
+    "app",
+    "node"
+  ],
+  "main": "trawler.js",
+  "author": "Josh Cole <saikojosh@gmail.com> (http://www.JoshuaCole.me)",
+  "contributors": [
+    {
+      "name": "Josh Cole",
+      "email": "saikojosh@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "async": "1.5.x",
+    "escape-regexp": "0.0.x",
+    "moment": "2.11.x",
+    "object-extender": "1.2.x"
+  },
+  "license": "MIT"
+}
