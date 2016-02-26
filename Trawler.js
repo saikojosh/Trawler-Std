@@ -7,6 +7,7 @@ var os           = require('os');
 var stream       = require('stream');
 var async        = require('async');
 var escapeRegExp = require('escape-regexp');
+var fetch        = require('node-fetch');
 var extender     = require('object-extender');
 var moment       = require('moment');
 
