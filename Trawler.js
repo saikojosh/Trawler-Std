@@ -226,6 +226,11 @@ Trawler.prototype.output = function (entryType, options, finish) {
     trawlerErr: options.trawlerErr
   };
 
+  // 'trawler' entires also get output to the console.
+  if (entryType === 'trawler') {
+    console.log(options.trawlerErr || options.message || options.data);
+  }
+
   // Write to the stream.
   var json = JSON.stringify(output) + '\n';
   this.internalStream.write(json, finish);
