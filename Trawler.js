@@ -23,7 +23,7 @@ function Trawler (inputConfig) {
       env:      'development'
     },
     trawler: {
-      restartOnError: null,
+      restartOnCrash: null,
       maxRestarts:    0,
       streams:        [],
       notifications:  []
@@ -164,15 +164,15 @@ Trawler.prototype.startApp = function () {
 Trawler.prototype.onAppCrash = function (code, signal) {
 
   var appName        = this.config.app.name;
-  var restartOnError = this.config.trawler.restartOnError;
+  var restartOnCrash = this.config.trawler.restartOnCrash;
   var maxRestarts    = this.config.trawler.maxRestarts;
 
   // Add crash alert to log.
   this.outputLog('trawler', 'App "' + appName + '" crashed ' + (this.numRestarts + 1) + ' time(s)!');
 
   // Stop if restart is not allowed.
-  if (!restartOnError || (maxRestarts > 0 && this.numRestarts >= maxRestarts)) {
-    var msg = (!restartOnError ? 'Restart on crash is disabled.' : 'Max restarts reached.');
+  if (!restartOnCrash || (maxRestarts > 0 && this.numRestarts >= maxRestarts)) {
+    var msg = (!restartOnCrash ? 'Restart on crash is disabled.' : 'Max restarts reached.');
     this.childApp = null;
     this.outputLog('trawler', msg + ' Quitting...', function (err) {
       process.exit(1);
