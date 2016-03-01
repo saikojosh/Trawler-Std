@@ -296,7 +296,7 @@ FileStream.prototype.isRotateRequired = function (logDir, logFilename, finish) {
     try {
       var entry = JSON.parse(firstLine);
     } catch (err) {
-      return next(new Error('Unable to parse JSON log file.'));
+      return finish(new Error('Unable to parse JSON log file.'));
     }
 
     // Drop out here if we do not need to rotate the logs.
