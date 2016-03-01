@@ -6,7 +6,6 @@
 var fs           = require('fs');
 var pathify      = require('path').join;
 var async        = require('async');
-var binaryReader = require('binary-reader');
 var escapeRegExp = require('escape-regexp');
 var moment       = require('moment');
 var extender     = require('object-extender');
