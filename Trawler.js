@@ -111,9 +111,12 @@ Trawler.prototype.initSomething = function (what, finish) {
     };
 
     // Create a new item.
+    // e.g. that.config.trawler.streams[0]
+    // e.g. that.streams.file()
     that.config.trawler[what][index] = new that[what][itemConfig.type](itemOptions);
 
     // Initialise the item.
+    // e.g. that.config.trawler.streams[0].init()
     that.config.trawler[what][index].init(function (err) {
       if (err) { return nextItem(err); }
       return nextItem(null);
