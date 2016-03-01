@@ -215,7 +215,7 @@ Trawler.prototype.output = function (entryType, options, finish) {
     name:       this.config.app.name,
     hostname:   this.hostname,
     pid:        process.pid,
-    time:       moment().toISODate(),
+    time:       moment().toISOString(),
     appUptime:  process.uptime() * 1000,  //convert to milliseconds.
     entryType:  entryType,
     message:    options.message,
