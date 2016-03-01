@@ -4,6 +4,7 @@
  */
 
 var fs           = require('fs');
+var readline     = require('readline');
 var pathify      = require('path').join;
 var async        = require('async');
 var escapeRegExp = require('escape-regexp');
@@ -50,7 +51,7 @@ FileStream.prototype.init = function (finish) {
     // Ignore dir exists error.
     if (err && err.code !== 'EEXIST') { return finish(err); }
 
-    that.rotateLogs(false, function (err) {
+    that.rotateLogs(function (err) {
 
       if (err) { return finish(err); }
 
@@ -92,35 +93,19 @@ FileStream.prototype.rotateLogs = function (finish) {
 
     function checkRotateTime (next) {
 
-      var firstLine = '';
+      var logDir      = that.cfg.logDir;
+      var logFilename = that.cfg.logFilename;
 
-      binaryReader.open(that.cfg.logFilename)
-      .on('error', function (err) {
-        return finish(err);
-      })
-      .read(1, function (bytesRead, buf, next) {
-        var nextByte = buf.toString();
-        firstLine += nextByte;
-        if (nextByte.match(/\r\n?|\n/)) { this.interrupt(); }
-        return next(null);
-      })
-      .on('close', function () {
-
-        var entry     = JSON.parse(firstLine.replace(/,$/, ''));
-        var entryTime = moment(entry.time);
-
-        // Drop out here if we do not need to rotate the logs.
-        if (moment().isSame(entryTime, 'day')) { return finish(null); }
-
-        // Otherwise continue.
-        return next(null);
-
-      })
-      .close();
+      that.isRotateRequired(logDir, logFilename, function (err, rotateRequired) {
+        if (err) { return next(err); }
+        return next(null, rotateRequired);
+      });
 
     },
 
-    function corkAndClose (next) {
+    function corkAndClose (rotateRequired, next) {
+
+      if (!rotateRequired) { return next(null, rotateRequired); }
 
       // Cork and unlink the internal stream.
       that.internalStream.cork();
@@ -129,11 +114,15 @@ FileStream.prototype.rotateLogs = function (finish) {
       // Close the stream.
       that.stream.end();
 
-      return next(null);
+      return next(null, rotateRequired);
 
     },
 
-    function readLogDir (next) {
+    function readLogDir (rotateRequired, next) {
+
+      if (!rotateRequired) {
+        return next(null, rotateRequired, null, null, null);
+      }
 
       // Read in the directory so we can check the existing logs.
       fs.readdir(that.cfg.logDir, function (err, files) {
@@ -165,29 +154,35 @@ FileStream.prototype.rotateLogs = function (finish) {
         }
 
         // Continue.
-        return next(null, logFiles, maxLogNum, maxLogFilename);
+        return next(null, rotateRequired, logFiles, maxLogNum, maxLogFilename);
 
       });
 
     },
 
-    function killOldestLog (logFiles, maxLogNum, maxLogFilename, next) {
+    function killOldestLog (rotateRequired, logFiles, maxLogNum, maxLogFilename, next) {
+
+      if (!rotateRequired) { return next(null, rotateRequired, null); }
 
       // Skip if we still have one backlog slot remaining.
-      if (maxLogNum < that.maxBackLogs - 1) { return next(null, logFiles); }
+      if (maxLogNum < that.maxBackLogs - 1) {
+        return next(null, rotateRequired, logFiles);
+      }
 
       // Remove the first (oldest) log file from the array.
       logFiles.shift();
 
-      // If we have too many logs, kill the oldest one.
+      // Kill the oldest one.
       fs.unlink(maxLogFilename, function (err) {
         if (err) { return next(err); }
-        return next(null, logFiles);
+        return next(null, rotateRequired, logFiles);
       });
 
     },
 
-    function renameOtherLogs (logFiles, next) {
+    function renameOtherLogs (rotateRequired, logFiles, next) {
+
+      if (!rotateRequired) { return next(null, rotateRequired); }
 
       // Reset the RegExp just in case the first string we exec is the same as the previous one.
       logFileRegExp.exec('');
@@ -205,12 +200,14 @@ FileStream.prototype.rotateLogs = function (finish) {
 
       }, function (err) {
         if (err) { return next(err); }
-        return next(null);
+        return next(null, rotateRequired);
       });
 
     },
 
-    function uncorkAndOpen () {
+    function uncorkAndOpen (rotateRequired, next) {
+
+      if (!rotateRequired) { return next(null, rotateRequired); }
 
       // Open a new stream.
       that.createStream();
@@ -234,6 +231,72 @@ FileStream.prototype.rotateLogs = function (finish) {
 
     // All done!
     return finish(null);
+
+  });
+
+};
+
+/*
+ * Checks if we need to rotate the logs and passes a bool to the callback.
+ * finish(err, rotateRequired);
+ */
+FileStream.prototype.isRotateRequired = function (logDir, logFilename, finish) {
+
+  var isError    = false;
+  var logFile    = pathify(logDir, logFilename);
+  var logStream  = fs.createReadStream(logFile);
+  var lineReader = readline.createInterface({
+    input: logStream
+  });
+  var firstLine = '';
+
+  // Handle log file stream errors.
+  logStream.on('error', function (err) {
+
+    // Prevent any further events firing.
+    isError = true;
+    logStream.destroy();
+    lineReader.close();
+
+    // Ignore file doesn't exist error.
+    if (err.code === 'ENOENT') { return finish(null, false); }
+    else                       { return finish(err);         }
+
+  });
+
+  // Handle reading of log file lines.
+  lineReader.on('line', function (line) {
+
+    // The line reader keeps firing this event even after it has closed??!
+    if (lineReader.closed) { return; }
+
+    // Line reader doesn't respect the input stream closing so we do a manual check.
+    if (isError) { return; }
+
+    // We only want the first line.
+    firstLine = line;
+    lineReader.close();
+
+  });
+
+  // Once we have the first line of the log file.
+  lineReader.on('close', function () {
+
+    // Line reader doesn't respect the input stream closing so we do a manual check.
+    if (isError) { return; }
+
+    try {
+      var entry = JSON.parse(firstLine);
+    } catch (err) {
+      return next(new Error('Unable to parse JSON log file.'));
+    }
+
+    // Drop out here if we do not need to rotate the logs.
+    var entryTime = moment(entry.time);
+    if (moment().isSame(entryTime, 'day')) { return finish(null, false); }
+
+    // Otherwise continue.
+    return finish(null, true);
 
   });
 
