@@ -172,8 +172,9 @@ Trawler.prototype.onAppCrash = function (code, signal) {
 
   // Stop if restart is not allowed.
   if (!restartOnError || (maxRestarts > 0 && this.numRestarts >= maxRestarts)) {
+    var msg = (!restartOnError ? 'Restart on crash is disabled.' : 'Max restarts reached.');
     this.childApp = null;
-    this.outputLog('trawler', 'Max restarts reached. Quitting...', function (err) {
+    this.outputLog('trawler', msg + ' Quitting...', function (err) {
       process.exit(1);
     });
     return;
