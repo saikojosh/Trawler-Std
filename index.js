@@ -4,6 +4,11 @@
  * TRAWLER (entry point).
  */
 
+// Ensure we throw exceptions that occur within Trawler rather than swallowing them.
+process.on('uncaughtException', function (err) {
+  throw err;
+});
+
 var pathify     = require('path').join;
 var packageJSON = require(pathify(process.cwd(), 'package.json'));
 var Trawler     = require('./Trawler');
