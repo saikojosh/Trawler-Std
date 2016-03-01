@@ -176,6 +176,7 @@ Trawler.prototype.onAppCrash = function (code, signal) {
     this.outputLog('trawler', 'Max restarts reached. Quitting...', function (err) {
       process.exit(1);
     });
+    return;
   }
 
   this.numRestarts++;
