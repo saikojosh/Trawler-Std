@@ -138,7 +138,7 @@ Trawler.prototype.startApp = function () {
   var version = this.config.app.version;
 
   // Add starting message to log.
-  this.output('trawler', 'Starting app "' + appName + '" v' + version + '...');
+  this.outputLog('trawler', 'Starting app "' + appName + '" v' + version + '...');
 
   // Start the application.
   this.childApp = spawn('node', [this.config.app.mainFile], {
@@ -153,8 +153,8 @@ Trawler.prototype.startApp = function () {
   this.childApp.on('close', this.onAppCrash.bind(this));
 
   // Prepare stream handlers for child output.
-  this.childApp.stdout.on('data', this.output.bind(this, 'app-output'));
-  this.childApp.stderr.on('data', this.output.bind(this, 'app-error'));
+  this.childApp.stdout.on('data', this.processChildAppOutput.bind(this, 'app-output'));
+  this.childApp.stderr.on('data', this.processChildAppOutput.bind(this, 'app-error'));
 
 };
 
@@ -168,12 +168,12 @@ Trawler.prototype.onAppCrash = function (code, signal) {
   var maxRestarts    = this.config.trawler.maxRestarts;
 
   // Add crash alert to log.
-  this.output('trawler', 'App "' + appName + '" crashed ' + (this.numRestarts + 1) + ' time(s)!');
+  this.outputLog('trawler', 'App "' + appName + '" crashed ' + (this.numRestarts + 1) + ' time(s)!');
 
   // Stop if restart is not allowed.
   if (!restartOnError || (maxRestarts > 0 && this.numRestarts >= maxRestarts)) {
     this.childApp = null;
-    this.output('trawler', 'Max restarts reached. Quitting...', function (err) {
+    this.outputLog('trawler', 'Max restarts reached. Quitting...', function (err) {
       process.exit(1);
     });
   }
@@ -181,7 +181,7 @@ Trawler.prototype.onAppCrash = function (code, signal) {
   this.numRestarts++;
 
   // Add restarting number to log.
-  this.output('trawler', 'Restart #' + this.numRestarts);
+  this.outputLog('trawler', 'Restart #' + this.numRestarts);
 
   // Do the restart.
   return this.startApp();
@@ -197,16 +197,17 @@ Trawler.prototype.killApp = function () {
 };
 
 /*
- * Writes the output from the child to the internal stream.
+ * Writes the a log output to the internal stream.
  * finish(err);
  * [Usage]
- *  output('entry-type', { ... }, callback);
- *  output('entry-type', 'Message here!', callback);
+ *  outputLog('entry-type', { ... }, callback);
+ *  outputLog('entry-type', 'Message here!', callback);
  */
-Trawler.prototype.output = function (entryType, options, finish) {
+Trawler.prototype.outputLog = function (entryType, options, finish) {
   options = (typeof options === 'string' ? options = { message: options } : options);
   finish  = finish || function(){};
 
+  // Default options.
   options = extender.defaults({
     message:    null,
     data:       {},
@@ -235,6 +236,13 @@ Trawler.prototype.output = function (entryType, options, finish) {
   var json = JSON.stringify(output) + '\n';
   this.internalStream.write(json, finish);
 
+};
+
+/*
+ * Converts output from the child app to usable log data.
+ */
+Trawler.prototype.processChildAppOutput = function (entryType, buf) {
+  this.outputLog(entryType, buf.toString());
 };
 
 /*
