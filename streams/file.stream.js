@@ -293,6 +293,9 @@ FileStream.prototype.isRotateRequired = function (logDir, logFilename, finish) {
     // Line reader doesn't respect the input stream closing so we do a manual check.
     if (isError) { return; }
 
+    // We have an empty file so lets drop out here.
+    if (!firstLine) { return finish(null, false); }
+
     try {
       var entry = JSON.parse(firstLine);
     } catch (err) {
