@@ -184,7 +184,7 @@ Trawler.prototype.onAppCrash = function (code, signal) {
   this.output('trawler', 'Restart #' + this.numRestarts);
 
   // Do the restart.
-  return this.start();
+  return this.startApp();
 
 };
 
