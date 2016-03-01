@@ -77,6 +77,10 @@ FileStream.prototype.createStream = function () {
   this.stream = fs.createWriteStream(logFile, {
     flags: 'a'
   });
+
+  // Link to the internal stream.
+  this.internalStream.pipe(this.stream);
+
 };
 
 /*
