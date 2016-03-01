@@ -200,8 +200,8 @@ Trawler.prototype.killApp = function () {
  * Writes the output from the child to the internal stream.
  * finish(err);
  * [Usage]
- *  output({ ... }, callback);
- *  output('Message here!', callback);
+ *  output('entry-type', { ... }, callback);
+ *  output('entry-type', 'Message here!', callback);
  */
 Trawler.prototype.output = function (entryType, options, finish) {
   options = (typeof options === 'string' ? options = { message: options } : options);
