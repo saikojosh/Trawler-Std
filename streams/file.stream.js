@@ -56,9 +56,9 @@ FileStream.prototype.init = function (finish) {
       if (err) { return finish(err); }
 
       // Create the initial stream.
-      stream = that.createStream.call(that);
+      that.createStream.call(that);
 
-      return finish(null, stream);
+      return finish(null);
 
     });
 
@@ -70,7 +70,11 @@ FileStream.prototype.init = function (finish) {
  * Create a new stream of this type and returns it.
  */
 FileStream.prototype.createStream = function () {
-  return this.stream = fs.createWriteStream(this.cfg.logFilename, {
+
+  var logFile = pathify(this.cfg.logDir, this.cfg.logFilename);
+
+  // Create new stream.
+  this.stream = fs.createWriteStream(logFile, {
     flags: 'a'
   });
 };
