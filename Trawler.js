@@ -2,6 +2,7 @@
  * TRAWLER (class).
  */
 
+var spawn    = require('child_process').spawn;
 var os       = require('os');
 var stream   = require('stream');
 var async    = require('async');
@@ -137,7 +138,7 @@ Trawler.prototype.startApp = function () {
   this.output('trawler', 'Starting app "' + appName + '" v' + version + '...');
 
   // Start the application.
-  this.childApp = spawn('node', this.config.app.mainFile, {
+  this.childApp = spawn('node', [this.config.app.mainFile], {
     detached: true,
     stdio:    ['ignore', 'pipe', 'pipe']  //stdin, stdout, stderr.
   });
