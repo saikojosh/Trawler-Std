@@ -19,7 +19,7 @@
     "node"
   ],
   "main": "index.js",
-  "preferGlobal": "true",
+  "preferGlobal": true,
   "bin": {
     "trawler": "index.js"
   },
