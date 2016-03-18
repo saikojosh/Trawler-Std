@@ -51,12 +51,12 @@ FileStream.prototype.init = function (finish) {
     // Ignore dir exists error.
     if (err && err.code !== 'EEXIST') { return finish(err); }
 
-    that.rotateLogs(function (err) {
+    that.rotateLogs(function (err, rotated) {
 
       if (err) { return finish(err); }
 
-      // Create the initial stream.
-      that.createStream.call(that);
+      // Ensure we create a new stream if we haven't rotated the logs, oitherwise rotateLogs() will handle stream creation.
+      if (!rotated) { that.createStream(); }
 
       return finish(null);
 
@@ -104,7 +104,7 @@ FileStream.prototype.killStream = function () {
 
 /*
  * Renames the old log files and creates a fresh one.
- * finish(err);
+ * finish(err, rotated);
  */
 FileStream.prototype.rotateLogs = function (finish) {
   finish = finish || function(){};
@@ -113,15 +113,14 @@ FileStream.prototype.rotateLogs = function (finish) {
   if (!this.cfg.rotateLogs) { return finish(null); }
 
   var that          = this;
-  var logFileRegStr = '^' + escapeRegExp(this.cfg.logFilename + '(?:\.(\d+))?');
-  var logFileRegExp = new RegExp(logFileRegStr);
+  var logDir        = that.cfg.logDir;
+  var logFilename   = that.cfg.logFilename;
+  var logFileRegStr = escapeRegExp(logFilename) + '(?:\\.(\\d+))?';
+  var logFileRegExp = new RegExp(logFileRegStr, 'i');
 
   async.waterfall([
 
     function checkRotateTime (next) {
-
-      var logDir      = that.cfg.logDir;
-      var logFilename = that.cfg.logFilename;
 
       that.isRotateRequired(logDir, logFilename, function (err, rotateRequired) {
         if (err) { return next(err); }
@@ -151,37 +150,9 @@ FileStream.prototype.rotateLogs = function (finish) {
       }
 
       // Read in the directory so we can check the existing logs.
-      fs.readdir(that.cfg.logDir, function (err, files) {
-
+      that.listLogFiles(logDir, logFileRegExp, function (err, logFiles, maxLogNum, maxLogFilename) {
         if (err) { return next(err); }
-
-        var logFiles       = [];
-        var maxLogNum      = null;
-        var maxLogFilename = null;
-
-        // Sort the files, oldest first.
-        files = files.sort(function (a, b) { return a < b; });
-
-        // Check which log files we already have.
-        for (var i = 0, ilen = files.length ; i < ilen ; i++) {
-          var filename = files[i];
-          var match    = logFileRegExp.exec(filename);
-
-          // Skip if the file isn't one of our logs.
-          if (!match) { continue; }
-
-          // Remember each log file we find.
-          logFiles.push(filename);
-          if (i === 0 && match[1]) {
-            maxLogNum      = parseInt(match[1], 10);
-            maxLogFilename = match[0];
-          }
-
-        }
-
-        // Continue.
         return next(null, rotateRequired, logFiles, maxLogNum, maxLogFilename);
-
       });
 
     },
@@ -190,8 +161,8 @@ FileStream.prototype.rotateLogs = function (finish) {
 
       if (!rotateRequired) { return next(null, rotateRequired, null); }
 
-      // Skip if we still have one backlog slot remaining.
-      if (maxLogNum < that.maxBackLogs - 1) {
+      // Skip if we still have at least one backlog slot remaining.
+      if (typeof maxLogNum !== 'number' || maxLogNum < that.maxBackLogs - 1) {
         return next(null, rotateRequired, logFiles);
       }
 
@@ -210,16 +181,14 @@ FileStream.prototype.rotateLogs = function (finish) {
 
       if (!rotateRequired) { return next(null, rotateRequired); }
 
-      // Reset the RegExp just in case the first string we exec is the same as the previous one.
-      logFileRegExp.exec('');
+      async.each(logFiles, function (item, nextItem) {
 
-      async.each(logFiles, function (filename, nextItem) {
-
-        var match = filename.match(logFileRegExp);
+        var logNum      = (item.match[1] ? parseInt(item.match[1], 10) : 0) + 1;
+        var oldFilename = pathify(logDir, item.filename);
+        var newFilename = pathify(logDir, logFilename + '.' + logNum);
 
         // Do the rename.
-        var newFilename = that.cfg.logFilename + '.' + (parseInt(match[1], 10) + 1);
-        fs.rename(filename, newFilename, function (err) {
+        fs.rename(oldFilename, newFilename, function (err) {
           if (err) { return nextItem(err); }
           return nextItem(null);
         });
@@ -241,11 +210,11 @@ FileStream.prototype.rotateLogs = function (finish) {
       // Let the internal stream flow again.
       that.internalStream.uncork();
 
-      return next(null);
+      return next(null, rotateRequired);
 
     }
 
-  ], function (err) {
+  ], function (err, rotateRequired) {
 
     if (err) { return finish(err); }
 
@@ -255,7 +224,7 @@ FileStream.prototype.rotateLogs = function (finish) {
     setTimeout(that.rotateLogs.bind(that), waitTimeMS);
 
     // All done!
-    return finish(null);
+    return finish(null, rotateRequired);
 
   });
 
@@ -325,6 +294,81 @@ FileStream.prototype.isRotateRequired = function (logDir, logFilename, finish) {
 
     // Otherwise continue.
     return finish(null, true);
+
+  });
+
+};
+
+/*
+ * Passes a shallow list of files (not directories) in the given directory.
+ * finish(err, logFiles, maxLogNum, maxLogFilename);
+ */
+FileStream.prototype.listLogFiles = function (logDir, logFileRegExp, finish) {
+
+  // Read in the directory so we can check the existing logs.
+  fs.readdir(logDir, function (err, files) {
+
+    if (err) { return finish(err); }
+
+    var logFiles       = [];
+    var maxLogNum      = null;
+    var maxLogFilename = null;
+
+    // No logs found.
+    if (!files || !files.length) { return finish(null, logFiles, maxLogNum, maxLogFilename); }
+
+    // Filter just the files.
+    async.each(files, function (filename, next) {
+
+      // Check the type of each filename (e.g. file, directory, etc).
+      fs.stat(pathify(logDir, filename), function (err, stats) {
+
+        if (err) { return next(err); }
+
+        // Skip anything that isn't a file e.g. directories.
+        if (!stats.isFile()) { return next(null); }
+
+        var match = logFileRegExp.exec(filename);
+
+        // Skip if the file isn't one of our logs.
+        if (!match) { return next(null); }
+
+        // Remember each log file we find.
+        logFiles.push({
+          filename: filename,
+          match:    match
+        });
+
+        return next(null);
+
+      });
+
+    }, function (err) {
+
+      if (err) { return finish(err); }
+
+      // Drop out here if no log files were found.
+      if (!logFiles.length) { return finish(null, logFiles, maxLogNum, maxLogFilename); }
+
+      // Sort the files, oldest first.
+      logFiles = logFiles.sort(function (a, b) {
+        return a.filename.toLowerCase() < b.filename.toLowerCase();
+      });
+
+      // Reset regular expression.
+      logFileRegExp.exec('');
+
+      var match = logFiles[0].filename.match(logFileRegExp);
+
+      // Get the max log info from the oldest log file.
+      if (match[1]) {
+        maxLogNum      = parseInt(match[1], 10);
+        maxLogFilename = match[0];
+      }
+
+      return finish(null, logFiles, maxLogNum, maxLogFilename);
+
+    });
 
   });
 
