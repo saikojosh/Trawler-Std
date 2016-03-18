@@ -67,9 +67,12 @@ FileStream.prototype.init = function (finish) {
 };
 
 /*
- * Create a new stream of this type and returns it.
+ * Create a new stream of this type.
  */
 FileStream.prototype.createStream = function () {
+
+  // Skip if stream already exists.
+  if (this.stream) { return; }
 
   var logFile = pathify(this.cfg.logDir, this.cfg.logFilename);
 
@@ -82,6 +85,22 @@ FileStream.prototype.createStream = function () {
   this.internalStream.pipe(this.stream);
 
 };
+
+/*
+ * Kills the existing stream of this type.
+ */
+FileStream.prototype.killStream = function () {
+
+  // Skip if no stream exists.
+  if (!this.stream) { return; }
+
+  // Unlink from the internal stream.
+  this.internalStream.unpipe(this.stream);
+
+  // Close the stream.
+  this.stream.end();
+
+}
 
 /*
  * Renames the old log files and creates a fresh one.
@@ -115,12 +134,11 @@ FileStream.prototype.rotateLogs = function (finish) {
 
       if (!rotateRequired) { return next(null, rotateRequired); }
 
-      // Cork and unlink the internal stream.
+      // Cork the internal stream and stop it from flowing.
       that.internalStream.cork();
-      that.internalStream.unpipe(that.stream);
 
-      // Close the stream.
-      that.stream.end();
+      // Kill the stream.
+      that.killStream();
 
       return next(null, rotateRequired);
 
@@ -220,8 +238,7 @@ FileStream.prototype.rotateLogs = function (finish) {
       // Open a new stream.
       that.createStream();
 
-      // Uncork and link the internal stream.
-      that.internalStream.pipe(that.stream);
+      // Let the internal stream flow again.
       that.internalStream.uncork();
 
       return next(null);
