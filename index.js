@@ -11,6 +11,7 @@ process.on('uncaughtException', function (err) {
 
 var pathify     = require('path').join;
 var packageJSON = require(pathify(process.cwd(), 'package.json'));
+var extender    = require('object-extender');
 var Trawler     = require('./Trawler');
 
 // Prepare Trawler.
@@ -21,7 +22,7 @@ var boat = new Trawler({
     mainFile: packageJSON.main,
     env:      process.env.NODE_ENV
   },
-  trawler: packageJSON.trawler || {}
+  trawler: extender.copy(packageJSON.trawler) || {}  // Break the reference with the packageJSON object.
 });
 
 // Initialise Trawler instance.
