@@ -45,7 +45,7 @@ SlackNotification.prototype.init = function (finish) {
  * Send the notification.
  * finish(err);
  */
-SlackNotification.prototype.notify = function (finish) {
+SlackNotification.prototype.notify = function (text, finish) {
   finish = finish || function(){};
 
   var mode = this.cfg.env.toUpperCase();

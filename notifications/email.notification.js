@@ -42,7 +42,7 @@ EmailNotification.prototype.init = function (finish) {
  * Send the notification.
  * finish(err);
  */
-EmailNotification.prototype.notify = function (finish) {
+EmailNotification.prototype.notify = function (text, finish) {
   finish = finish || function(){};
 
 
