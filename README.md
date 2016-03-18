@@ -18,20 +18,20 @@ To use Trawler do the following:
   "main":    "{filename}",
   ...
   "trawler": {
-    "restartOnError": true,
-    "maxRestarts":    5,
+    "restartOnCrash": true,  // Optional.
+    "maxRestarts":    5,  // Optional.
     "streams": [{
       "type":        "file",
       "location":    "logs",
-      "logName":     "crash",
-      "rotateLogs":  true,
-      "maxBackLogs": 6
+      "logName":     "crash",  // Optional.
+      "rotateLogs":  true,  // Optional.
+      "maxBackLogs": 6  // Optional.
     }],
     "notifications": [{
       "type":      "slack",
       "url":       "{webhookURL}",
-      "username":  "Trawler",
-      "iconEmoji": ":anchor:"
+      "username":  "Trawler",  // Optional.
+      "iconEmoji": ":anchor:"  // Optional.
     }]
   }
 }
