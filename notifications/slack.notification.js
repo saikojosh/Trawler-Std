@@ -24,7 +24,8 @@ function SlackNotification (options) {
   }, options.itemConfig, {
     // Private config.
     appName:   options.mainConfig.app.name,
-    env:       options.mainConfig.app.env
+    env:       options.mainConfig.app.env,
+    version:   options.mainConfig.app.version
   });
 
 };
@@ -35,7 +36,7 @@ function SlackNotification (options) {
  */
 SlackNotification.prototype.init = function (finish) {
 
-  //nothing required.
+  /* Nothing required. */
 
   return finish(null);
 
@@ -45,15 +46,29 @@ SlackNotification.prototype.init = function (finish) {
  * Send the notification.
  * finish(err);
  */
-SlackNotification.prototype.notify = function (text, finish) {
+SlackNotification.prototype.send = function (options, finish) {
   finish = finish || function(){};
 
-  var mode = this.cfg.env.toUpperCase();
+  options = extender.defaults({
+    notificationType: null,
+    numRestarts:      null,
+    trawlerErr:       null
+  }, options);
 
+  // Prepare the appropriate message.
+  var message;
+  switch (options.notificationType) {
+    case 'app-no-restarts':   message = '*Immediate attention required:* The app is now allowed to crash because "restartOnCrash" is not set to true.';                                           break;
+    case 'app-restart-limit': message = '*Immediate attention required:* The app has crashed too many times and cannot be restarted again (max ' + options.numRestarts + ' restart(s) allowed).'; break;
+    case 'app-crash':         message = 'The app has crashed *' + options.numRestarts + ' time(s)*.';                                                                                             break;
+    case 'trawler-crash':     message = '*Immediate attention required:* Trawler itself has crashed!\n```' + options.trawlerErr.stack + '```';                                                    break;
+  }
+
+  // Post to Slack.
   fetch(this.cfg.url, {
-    method: 'GET',
+    method: 'POST',
     body:   JSON.stringify({
-      text:       '[' + this.cfg.appName + '] [' + mode + '] ' + text,
+      text:       '*App `' + this.cfg.appName + '` in `' + this.cfg.env.toLowerCase() + '` mode - `v' + this.cfg.version + '`:*\n' + message,
       username:   this.cfg.username,
       icon_emoji: this.cfg.iconEmoji,
       icon_url:   this.cfg.iconURL
@@ -61,6 +76,9 @@ SlackNotification.prototype.notify = function (text, finish) {
   })
   .then(function(res) {
     return finish(null);
+  })
+  .catch(function (err) {
+    return finish(err);
   });
 
 };
