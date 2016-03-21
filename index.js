@@ -4,18 +4,38 @@
  * TRAWLER (entry point).
  */
 
-// Ensure we throw exceptions that occur within Trawler rather than swallowing them.
-process.on('uncaughtException', function (err) {
-  throw err;
-});
+ var pathify     = require('path').join;
+ var packageJSON = require(pathify(process.cwd(), 'package.json'));
+ var extender    = require('object-extender');
+ var Trawler     = require('./Trawler');
+ var boat;
 
-var pathify     = require('path').join;
-var packageJSON = require(pathify(process.cwd(), 'package.json'));
-var extender    = require('object-extender');
-var Trawler     = require('./Trawler');
+// Ensure we throw exceptions that occur within Trawler rather than swallowing them.
+// We bind this method to 'boat' (the Trawler instance) below.
+function handleUncaughtException (unhandledErr) {
+
+  // Log the Trawler crash.
+  boat.outputLog('trawler', 'Trawler itself has crashed!', function () {  // Ignore any error here.
+
+    // Attempt to notify our services.
+    boat.sendNotifications({
+      notificationType: 'trawler-crash',
+      trawlerErr:       unhandledErr
+    }, function () {  // Ignore any error here.
+
+      // Crash Trawler with the unhandled error.
+      console.error(unhandledErr.stack);
+      process.exit(1);
+
+    });
+
+  });
+
+}
+process.on('uncaughtException', handleUncaughtException);
 
 // Prepare Trawler.
-var boat = new Trawler({
+boat = new Trawler({
   app: {
     name:     packageJSON.name,
     version:  packageJSON.version,
