@@ -162,7 +162,7 @@ FileStream.prototype.rotateLogs = function (finish) {
       if (!rotateRequired) { return next(null, rotateRequired, null); }
 
       // Skip if we still have at least one backlog slot remaining.
-      if (typeof maxLogNum !== 'number' || maxLogNum < that.maxBackLogs - 1) {
+      if (typeof maxLogNum !== 'number' || maxLogNum < that.cfg.maxBackLogs - 1) {
         return next(null, rotateRequired, logFiles);
       }
 
@@ -170,7 +170,7 @@ FileStream.prototype.rotateLogs = function (finish) {
       logFiles.shift();
 
       // Kill the oldest one.
-      fs.unlink(maxLogFilename, function (err) {
+      fs.unlink(pathify(logDir, maxLogFilename), function (err) {
         if (err) { return next(err); }
         return next(null, rotateRequired, logFiles);
       });
@@ -183,7 +183,7 @@ FileStream.prototype.rotateLogs = function (finish) {
 
       async.each(logFiles, function (item, nextItem) {
 
-        var logNum      = (item.match[1] ? parseInt(item.match[1], 10) : 0) + 1;
+        var logNum      = (item.match[1] ? parseInt(item.match[1], 10) + 1 : 0);
         var oldFilename = pathify(logDir, item.filename);
         var newFilename = pathify(logDir, logFilename + '.' + logNum);
 
