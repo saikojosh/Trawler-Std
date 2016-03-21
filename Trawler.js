@@ -165,30 +165,86 @@ Trawler.prototype.startApp = function () {
  */
 Trawler.prototype.onAppCrash = function (code, signal) {
 
+  var that           = this;
   var appName        = this.config.app.name;
   var restartOnCrash = this.config.trawler.restartOnCrash;
   var maxRestarts    = this.config.trawler.maxRestarts;
+  var newNumRestarts = this.numRestarts + 1;
 
-  // Add crash alert to log.
-  this.outputLog('trawler', 'App "' + appName + '" crashed ' + (this.numRestarts + 1) + ' time(s)!');
+  async.waterfall([
 
-  // Stop if restart is not allowed.
-  if (!restartOnCrash || (maxRestarts > 0 && this.numRestarts >= maxRestarts)) {
-    var msg = (!restartOnCrash ? 'Restart on crash is disabled.' : 'Max restarts reached.');
-    this.childApp = null;
-    this.outputLog('trawler', msg + ' Quitting...', function (err) {
-      process.exit(1);
-    });
-    return;
-  }
+    // Add crash alert to log.
+    function logAppCrash (next) {
 
-  this.numRestarts++;
+      // Output to logs.
+      that.outputLog('trawler', 'App "' + appName + '" crashed ' + newNumRestarts + ' time(s)!');
 
-  // Add restarting number to log.
-  this.outputLog('trawler', 'Restart #' + this.numRestarts);
+      return next(null);
 
-  // Do the restart.
-  return this.startApp();
+    },
+
+    // Stop if restart is not allowed.
+    function checkMaxRestarts (next) {
+
+      var tooManyRestarts = (maxRestarts > 0 && newNumRestarts >= maxRestarts);
+      var restartAction   = (restartOnCrash && !tooManyRestarts ? 'restart' : 'quit');
+
+      return next(null, tooManyRestarts, restartAction);
+
+    },
+
+    // Send notifications to external services.
+    function notifyExternally (tooManyRestarts, restartAction, next) {
+
+      var notificationType;
+      if (!restartOnCrash) {
+        notificationType = 'app-no-restart';
+      } else if (tooManyRestarts) {
+        notificationType = 'app-restart-limit';
+      } else {
+        notificationType = 'app-crash';
+      }
+
+      that.sendNotifications({
+        notificationType: notificationType,
+        numRestarts:      newNumRestarts + (restartOnCrash && maxRestarts > 0 ? '/' + maxRestarts : '')
+      }, function (err) {
+        if (err) { return next(err); }
+        return next(null, restartAction);
+      });
+
+    }
+
+  ], function (err, restartAction) {
+
+    // If we did get an error at this point, lets just crash.
+    if (err) { throw err; }
+
+    // Attempt to restart.
+    if (restartAction === 'restart') {
+
+      // Add restarting number to log.
+      that.outputLog('trawler', 'Restart #' + newNumRestarts);
+
+      // Do the restart.
+      that.numRestarts = newNumRestarts;
+      return that.startApp();
+
+    // Can't restart so we quit.
+    } else if (restartAction === 'quit') {
+
+      var msg = (!restartOnCrash ? 'Restart on crash is disabled!' : 'Max restarts reached!');
+
+      // Quit the app AND Trawler.
+      that.childApp = null;
+      that.outputLog('trawler', msg + ' Quitting...', function (err) {
+        if (err) { return next(err); }
+        setTimeout(process.exit.bind(null, 1), 1000);  // Slight delay to allow streams to flush.
+      });
+
+    }
+
+  });
 
 };
 
@@ -239,6 +295,26 @@ Trawler.prototype.outputLog = function (entryType, options, finish) {
   // Write to the stream.
   var json = JSON.stringify(output) + '\n';
   this.internalStream.write(json, finish);
+
+};
+
+/*
+ * Sends all the notifications.
+ * callback(err);
+ */
+Trawler.prototype.sendNotifications = function (options, callback) {
+
+  async.each(this.config.trawler.notifications, function (notification, next) {
+
+    notification.send(options, function (err) {
+      if (err) { return next(err); }
+      return next(null);
+    });
+
+  }, function (err) {
+    if (err) { return callback(err); }
+    return callback(null);
+  });
 
 };
 
