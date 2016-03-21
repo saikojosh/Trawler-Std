@@ -68,7 +68,7 @@ module.exports = class NotificationBase {
       'Node: `' + process.version + '`',
       'Boot Time: `' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC` `(uptime ' + moment.utc().diff(options.childAppStartTime) + ' ms)`',
       'Code: `' + options.notificationType + '`',
-      'Status: `' + options.numRestarts + '` restarts',
+      'Status: `' + options.numRestarts + '` restart(s).',
       ' ',
       message,
       ' ',
