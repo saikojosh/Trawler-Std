@@ -37,7 +37,7 @@ module.exports = class Trawler {
     // We can't run ourselves.
     if (this.config.app.name === 'trawler') {
       console.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
-      console.error('  $ npm install -g trawler');
+      console.error('  $ npm install -g trawler-std');
       console.error('  $ trawler');
       process.exit(1);
     }
