@@ -39,11 +39,12 @@ function Trawler (inputConfig) {
   }
 
   // Private variables.
-  this.hostname          = os.hostname();
-  this.numRestarts       = 0;
-  this.internalStream    = new stream.PassThrough();
-  this.childApp          = null;
-  this.childAppStartTime = null;
+  this.hostname           = os.hostname();
+  this.numRestarts        = 0;
+  this.internalStream     = new stream.PassThrough();
+  this.childApp           = null;
+  this.childAppLastStderr = null;
+  this.childAppStartTime  = null;
 
 };
 
@@ -210,8 +211,9 @@ Trawler.prototype.onAppCrash = function (code, signal) {
       }
 
       that.sendNotifications({
-        notificationType: notificationType,
-        numRestarts:      newNumRestarts + (restartOnCrash && maxRestarts > 0 ? '/' + maxRestarts : '')
+        notificationType:   notificationType,
+        numRestarts:        newNumRestarts + (restartOnCrash && maxRestarts > 0 ? '/' + maxRestarts : ''),
+        childAppLastStderr: that.childAppLastStderr
       }, function (err) {
         if (err) { return next(err); }
         return next(null, restartAction);
@@ -299,10 +301,11 @@ Trawler.prototype.outputLog = function (entryType, options, finish) {
     trawlerErr:    options.trawlerErr
   };
 
-  // 'trawler' entires also get output to the console.
-  if (entryType === 'trawler') {
-    console.log(options.trawlerErr || options.message || options.data);
-  }
+  // The 'trawler' entires also get output to the console.
+  if (entryType === 'trawler') { console.log(options.trawlerErr || options.message || options.data); }
+
+  // Keep the last error in memory in case the app crashes.
+  if (entryType === 'app-error') { this.childAppLastStderr = options.message; }
 
   // Write to the stream.
   var json = JSON.stringify(output) + '\n';

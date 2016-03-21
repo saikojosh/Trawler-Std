@@ -50,18 +50,19 @@ SlackNotification.prototype.send = function (options, finish) {
   finish = finish || function(){};
 
   options = extender.defaults({
-    notificationType: null,
-    numRestarts:      null,
-    trawlerErr:       null
+    notificationType:   null,
+    numRestarts:        null,
+    childAppLastStderr: null,
+    trawlerErr:         null
   }, options);
 
   // Prepare the appropriate message.
   var message;
   switch (options.notificationType) {
-    case 'app-no-restarts':   message = '*Immediate attention required:* The app is now allowed to crash because "restartOnCrash" is not set to true.';                                           break;
-    case 'app-restart-limit': message = '*Immediate attention required:* The app has crashed too many times and cannot be restarted again (max ' + options.numRestarts + ' restart(s) allowed).'; break;
-    case 'app-crash':         message = 'The app has crashed *' + options.numRestarts + ' time(s)*.';                                                                                             break;
-    case 'trawler-crash':     message = '*Immediate attention required:* Trawler itself has crashed!\n```' + options.trawlerErr.stack + '```';                                                    break;
+    case 'app-no-restarts':   message = '*Immediate attention required:* The app is now allowed to crash because "restartOnCrash" is not set to true.'; break;
+    case 'app-restart-limit': message = 'The app has crashed *' + options.numRestarts + ' time(s)*!\n*Immediate attention required:* The app has crashed too many times and cannot be restarted again (max ' + options.numRestarts + ' restart(s) allowed).\n```' + options.childAppLastStderr + '```'; break;
+    case 'app-crash':         message = 'The app has crashed *' + options.numRestarts + ' time(s)*!\n```' + options.childAppLastStderr + '```'; break;
+    case 'trawler-crash':     message = '*Immediate attention required:* Trawler itself has crashed!\n```' + options.trawlerErr.stack + '```'; break;
   }
 
   // Post to Slack.
