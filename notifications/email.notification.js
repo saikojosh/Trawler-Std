@@ -1,57 +1,58 @@
+'use strict';
+
 /*
  * NOTIFICATION: email.
  * Notifies an email address.
  */
 
-var extender = require('object-extender');
-//var ultimail = require('ultimail');
+const extender = require('object-extender');
+// const ultimail = require('ultimail');
 
-/*
- * Constructor.
- * [options]
- *  mainConfig
- *  itemConfig
- *  internalStream
- */
-function EmailNotification (options) {
+module.exports = class EmailNotification {
 
-  this.cfg = extender.extend({
-    // Default values.
-    type: 'email'
-  }, options.itemConfig, {
-    // Private config.
-  });
+  /*
+   * Constructor.
+   * [options]
+   *  mainConfig
+   *  itemConfig
+   *  internalStream
+   */
+  constructor (options) {
+
+    this.cfg = extender.extend({
+      // Default values.
+      type: 'email',
+    }, options.itemConfig, {
+      // Private config.
+    });
+
+  }
+
+  /*
+   * Initialise the notification ready for use.
+   * finish(err);
+   */
+  init (finish) {
+
+
+    // TODO
+
+
+    return finish(null);
+
+  }
+
+  /*
+   * Send the notification.
+   * finish(err);
+   */
+  notify (text, _finish) {
+    const finish = _finish || function () {};
+
+
+    // TODO
+
+
+  }
 
 };
-
-/*
- * Initialise the notification ready for use.
- * finish(err);
- */
-EmailNotification.prototype.init = function (finish) {
-
-
-  // TODO
-
-
-  return finish(null);
-
-};
-
-/*
- * Send the notification.
- * finish(err);
- */
-EmailNotification.prototype.notify = function (text, finish) {
-  finish = finish || function(){};
-
-
-  // TODO
-
-
-};
-
-/*
- * Export!
- */
-module.exports = EmailNotification;
