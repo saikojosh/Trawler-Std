@@ -43,6 +43,7 @@ function Trawler (inputConfig) {
   this.numRestarts    = 0;
   this.internalStream = new stream.PassThrough();
   this.childApp       = null;
+  this.appStartTime   = null;
 
 };
 
@@ -148,6 +149,9 @@ Trawler.prototype.startApp = function () {
     stdio:    ['ignore', 'pipe', 'pipe']  //stdin, stdout, stderr.
   });
 
+  // Remember the start time.
+  this.appStartTime = moment();
+
   // Allow Trawler to exit independently of the child process.
   this.childApp.unref();
 
@@ -249,11 +253,18 @@ Trawler.prototype.onAppCrash = function (code, signal) {
 };
 
 /*
- * Kills the child app AND Trawler.
+ * Manually kills the child app AND Trawler.
  */
 Trawler.prototype.killApp = function () {
-  if (this.childApp) { this.childApp.kill(); }
+
+  if (this.childApp) {
+    this.childApp.kill();
+    this.childApp = null;
+    this.appStartTime = null;
+  }
+
   process.exit(0);
+
 };
 
 /*
@@ -276,15 +287,16 @@ Trawler.prototype.outputLog = function (entryType, options, finish) {
 
   // Construct the JSON output.
   var output = {
-    name:       this.config.app.name,
-    hostname:   this.hostname,
-    pid:        process.pid,
-    time:       moment().toISOString(),
-    appUptime:  process.uptime() * 1000,  //convert to milliseconds.
-    entryType:  entryType,
-    message:    options.message,
-    data:       options.data || {},
-    trawlerErr: options.trawlerErr
+    name:          this.config.app.name,
+    hostname:      this.hostname,
+    pid:           process.pid,
+    time:          moment().toISOString(),
+    appUptime:     this.getAppUptime(),
+    trawlerUptime: process.uptime() * 1000,  // Convert to milliseconds.
+    entryType:     entryType,
+    message:       options.message,
+    data:          options.data || {},
+    trawlerErr:    options.trawlerErr
   };
 
   // 'trawler' entires also get output to the console.
@@ -323,6 +335,13 @@ Trawler.prototype.sendNotifications = function (options, callback) {
  */
 Trawler.prototype.processChildAppOutput = function (entryType, buf) {
   this.outputLog(entryType, buf.toString());
+};
+
+/*
+ * Returns the uptime of the child app.
+ */
+Trawler.prototype.getAppUptime = function () {
+  return moment().diff(this.appStartTime);
 };
 
 /*
