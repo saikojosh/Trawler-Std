@@ -14,9 +14,16 @@
     "log",
     "output",
     "crash",
+    "error",
     "restart",
     "app",
-    "node"
+    "node",
+    "stdout",
+    "stderr",
+    "catch",
+    "nodemon",
+    "forever",
+    "restart"
   ],
   "main": "index.js",
   "preferGlobal": true,
