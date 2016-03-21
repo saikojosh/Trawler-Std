@@ -39,11 +39,11 @@ function Trawler (inputConfig) {
   }
 
   // Private variables.
-  this.hostname       = os.hostname();
-  this.numRestarts    = 0;
-  this.internalStream = new stream.PassThrough();
-  this.childApp       = null;
-  this.appStartTime   = null;
+  this.hostname          = os.hostname();
+  this.numRestarts       = 0;
+  this.internalStream    = new stream.PassThrough();
+  this.childApp          = null;
+  this.childAppStartTime = null;
 
 };
 
@@ -150,7 +150,7 @@ Trawler.prototype.startApp = function () {
   });
 
   // Remember the start time.
-  this.appStartTime = moment();
+  this.childAppStartTime = moment();
 
   // Allow Trawler to exit independently of the child process.
   this.childApp.unref();
@@ -260,7 +260,7 @@ Trawler.prototype.killApp = function () {
   if (this.childApp) {
     this.childApp.kill();
     this.childApp = null;
-    this.appStartTime = null;
+    this.childAppStartTime = null;
   }
 
   process.exit(0);
@@ -344,7 +344,7 @@ Trawler.prototype.processChildAppOutput = function (entryType, buf) {
  * Returns the uptime of the child app.
  */
 Trawler.prototype.getAppUptime = function () {
-  return moment().diff(this.appStartTime);
+  return moment().diff(this.childAppStartTime);
 };
 
 /*
