@@ -306,7 +306,10 @@ Trawler.prototype.outputLog = function (entryType, options, finish) {
 
   // Write to the stream.
   var json = JSON.stringify(output) + '\n';
-  this.internalStream.write(json, finish);
+  this.internalStream.write(json, function (err) {
+    if (err) { return finish(err); }
+    return finish(null);
+  });
 
 };
 
