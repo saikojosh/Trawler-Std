@@ -47,7 +47,8 @@ module.exports = class Trawler {
     this.numRestarts = 0;
     this.internalStream = new stream.PassThrough();
     this.childApp = null;
-    this.childAppLastStderr = null;
+    this.childAppStderrThreshold = 50;  // 50 milliseconds.
+    this.childAppStderrBuffer = [];
     this.childAppStartTime = null;
 
     // Streams.
@@ -146,7 +147,7 @@ module.exports = class Trawler {
     });
 
     // Remember the start time.
-    this.childAppStartTime = moment();
+    this.childAppStartTime = moment.utc();
 
     // Allow Trawler to exit independently of the child process.
     this.childApp.unref();
@@ -209,7 +210,8 @@ module.exports = class Trawler {
         that.sendNotifications({
           notificationType,
           numRestarts: newNumRestarts + (restartOnCrash && maxRestarts > 0 ? `/${maxRestarts}` : ''),
-          childAppLastStderr: that.childAppLastStderr,
+          childAppStderrBuffer: that.getChildStderr(),
+          childAppStartTime: that.childAppStartTime,
         }, (err) => {
           if (err) { return next(err); }
           return next(null, restartAction);
@@ -259,6 +261,7 @@ module.exports = class Trawler {
       this.childApp.kill();
       this.childApp = null;
       this.childAppStartTime = null;
+      this.clearChildStderr();
     }
 
     // Gracefully exit Trawler.
@@ -289,7 +292,7 @@ module.exports = class Trawler {
       name: this.config.app.name,
       hostname: this.hostname,
       pid: process.pid,
-      time: moment().toISOString(),
+      time: moment.utc().toISOString(),
       appUptime: this.getAppUptime(),
       trawlerUptime: process.uptime() * 1000,  // Convert to milliseconds.
       entryType,
@@ -302,7 +305,7 @@ module.exports = class Trawler {
     if (entryType === 'trawler') { console.log(options.trawlerErr || options.message || options.data); }
 
     // Keep the last error in memory in case the app crashes.
-    if (entryType === 'app-error') { this.childAppLastStderr = options.message; }
+    if (entryType === 'app-error') { this.storeChildStderr(options.message); }
 
     // Write to the stream.
     this.internalStream.write(`${JSON.stringify(output)}\n`, (err) => {
@@ -343,7 +346,51 @@ module.exports = class Trawler {
    * Returns the uptime of the child app.
    */
   getAppUptime () {
-    return moment().diff(this.childAppStartTime);
+    return moment.utc().diff(this.childAppStartTime);
+  }
+
+  /*
+   * Saves the given child stderr string in the buffer.
+   */
+  storeChildStderr (message) {
+
+    const time = moment.utc();
+
+    // Add the latest stderr to the end of the array.
+    this.childAppStderrBuffer.push({
+      time,
+      message,
+    });
+
+    // Remove any of the old stderrs that are too old and need to be dropped.
+    for (let i = 0, ilen = this.childAppStderrBuffer.length; i < ilen; i++) {
+      if (time.diff(this.childAppStderrBuffer[0].time) > this.childAppStderrThreshold) {
+        this.childAppStderrBuffer.shift();
+      }
+    }
+
+  }
+
+  /*
+   * Returns all the child stderr in the buffer.
+   */
+  getChildStderr () {
+
+    const output = [];
+
+    for (let i = 0, ilen = this.childAppStderrBuffer.length; i < ilen; i++) {
+      output.push(this.childAppStderrBuffer[i].message);
+    }
+
+    return output.join('\n');
+
+  }
+
+  /*
+   * Provides a friendly method to emptu the child stderr buffer.
+   */
+  clearChildStderr () {
+    this.childAppStderrBuffer = [];
   }
 
 };
