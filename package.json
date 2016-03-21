@@ -6,7 +6,7 @@
   "bugs": {
     "url": "https://github.com/saikojosh/Trawler/issues"
   },
-  "name": "trawler",
+  "name": "trawler-std",
   "version": "0.0.1",
   "description": "A simple utility to capture console output of your Node.js app, stream it somewhere, notify an endpoint, and restart your app on failure.",
   "keywords": [
