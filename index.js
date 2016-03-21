@@ -26,7 +26,7 @@ function handleUncaughtException (unhandledErr) {
 
       // Crash Trawler with the unhandled error.
       console.error(unhandledErr.stack);
-      process.exit(1);
+      setTimeout(process.exit.bind(null, 1), 1000);  // Slight delay to allow streams to flush.
 
     });
 
