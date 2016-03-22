@@ -8,10 +8,10 @@ const spawn = require('child_process').spawn;
 const os = require('os');
 const stream = require('stream');
 const async = require('async');
-const clc = require('cli-color');
 const extender = require('object-extender');
 const moment = require('moment');
 const packageJSON = require('./package.json');
+const Logger = require('./modules/Logger');
 
 module.exports = class Trawler {
 
@@ -37,14 +37,6 @@ module.exports = class Trawler {
       cliArgs: [],
     }, inputConfig);
 
-    // We can't run ourselves.
-    if (this.config.app.name === 'trawler') {
-      this.logError('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
-      this.logError('  $ npm install -g trawler-std');
-      this.logError('  $ trawler');
-      process.exit(1);
-    }
-
     // Private variables.
     this.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
     this.hostname = os.hostname();
@@ -54,6 +46,17 @@ module.exports = class Trawler {
     this.childAppStderrThreshold = 50;  // 50 milliseconds.
     this.childAppStderrBuffer = [];
     this.childAppStartTime = null;
+
+    // Initliase logger.
+    this.log = new Logger(this.debug);
+
+    // We can't run ourselves.
+    if (this.config.app.name === 'trawler') {
+      this.log.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
+      this.log.error('  $ npm install -g trawler-std');
+      this.log.error('  $ trawler');
+      process.exit(1);
+    }
 
     // Streams.
     this.streams = {
@@ -65,7 +68,7 @@ module.exports = class Trawler {
       slack: require('./notifications/slack.notification.js'),
     };
 
-    this.logDebug('Trawler ready.');
+    this.log.debug('Trawler ready.');
 
   }
 
@@ -76,7 +79,7 @@ module.exports = class Trawler {
   init (finish) {
 
     // Console log only.
-    this.logImportant(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
+    this.log.important(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
 
     // Prevent Trawler from exiting immediately after starting the child app.
     process.stdin.resume();
@@ -91,7 +94,7 @@ module.exports = class Trawler {
 
         if (err) { return finish(err); }
 
-        this.logDebug('Trawler initialised.');
+        this.log.debug('Trawler initialised.');
 
         // Boot the child app.
         this.startApp();
@@ -110,13 +113,13 @@ module.exports = class Trawler {
    */
   initSomething (what, finish) {
 
-    this.logDebug(`Initialising ${what}:`);
+    this.log.debug(`Initialising ${what}:`);
 
     // Skip if we have nothing to initialise.
     if (!this.config.trawler[what]) { return finish(null); }
     async.forEachOf(this.config.trawler[what], (itemConfig, index, nextItem) => {
 
-      this.logDebug(`>> ${itemConfig.type}...`);
+      this.log.debug(`>> ${itemConfig.type}...`);
 
       const itemOptions = {
         internalStream: this.internalStream,  // Trawler's internal stream.
@@ -138,7 +141,7 @@ module.exports = class Trawler {
 
     }, (err) => {
       if (err) { return finish(err); }
-      this.logDebug('Done.');
+      this.log.debug('Done.');
       return finish(err);
     });
 
@@ -278,7 +281,7 @@ module.exports = class Trawler {
    */
   killApp () {
 
-    this.logDebug(`Killing app "${this.config.app.name}"...`);
+    this.log.debug(`Killing app "${this.config.app.name}"...`);
 
     // Tidy up the child app.
     if (this.childApp) {
@@ -289,7 +292,7 @@ module.exports = class Trawler {
     }
 
     // Gracefully exit Trawler.
-    this.logDebug('Goodbye.');
+    this.log.debug('Goodbye.');
     process.exit(0);
 
   }
@@ -332,15 +335,16 @@ module.exports = class Trawler {
       let logFn;
 
       switch (options.trawlerLogType) {
-        case 'error': logFn = this.logError; break;
-        case 'important': logFn = this.logImportant; break;
-        case 'success': logFn = this.logSuccess; break;
-        case 'warning': logFn = this.logWarning; break;
+        case 'error': logFn = this.log.error; break;
+        case 'important': logFn = this.log.important; break;
+        case 'success': logFn = this.log.success; break;
+        case 'warning': logFn = this.log.warning; break;
         case 'message':
-        default: logFn = this.logMessage; break;
+        default: logFn = this.log.message; break;
       }
 
-      logFn.call(this, options.trawlerErr || options.message || options.data);
+      // We must call the log function with the correct context.
+      logFn.call(this.log, options.trawlerErr || options.message || options.data);
     }
 
     // Keep the last error in memory in case the app crashes.
@@ -360,11 +364,11 @@ module.exports = class Trawler {
    */
   sendNotifications (options, callback) {
 
-    this.logDebug('Sending notifications:');
+    this.log.debug('Sending notifications:');
 
     async.each(this.config.trawler.notifications, (notification, next) => {
 
-      this.logDebug(`>> ${notification.cfg.type}`);
+      this.log.debug(`>> ${notification.cfg.type}`);
 
       notification.send(options, (err) => {
         if (err) { return next(err); }
@@ -373,7 +377,7 @@ module.exports = class Trawler {
 
     }, (err) => {
       if (err) { return callback(err); }
-      this.logDebug('Done.');
+      this.log.debug('Done.');
       return callback(null);
     });
 
@@ -435,77 +439,6 @@ module.exports = class Trawler {
    */
   clearChildStderr () {
     this.childAppStderrBuffer = [];
-  }
-
-  /*
-   * Log out as ordinary text.
-   */
-  logMessage () {
-    console.log.apply(console, arguments);  // Node doesn't support the spread operator without the harmony flag yet.
-  }
-
-  /*
-   * Log out as important text.
-   */
-  logImportant () {
-    this.logAsColour('yellowBright', ['bold', 'underline'], 'log', arguments);
-  }
-
-  /*
-   * Log out as successful text.
-   */
-  logSuccess () {
-    this.logAsColour('greenBright', null, 'log', arguments);
-  }
-
-
-  /*
-   * Log out as warning text.
-   */
-  logWarning () {
-    this.logAsColour('xterm:202', null, 'log', arguments);
-  }
-
-  /*
-   * Logs out an error.
-   */
-  logError () {
-    this.logAsColour('redBright', null, 'error', arguments);
-  }
-
-  /*
-   * Logs out a debug message (only in debug mode).
-   */
-  logDebug () {
-    if (this.debug) { this.logAsColour('blueBright', 'italic', 'info', arguments); }
-  }
-
-  /*
-   * Allows us to log to the console in any colour we want.
-   */
-  logAsColour (colour, _styles, method, _arguments) {
-    const styles = (typeof _styles === 'string' ? [_styles] : _styles) || [];
-    const args = Array.prototype.slice.call(_arguments);
-    const colourMatch = colour.match(/^([a-z]+)(?::(\d+))?$/i);
-    const colourFn = (colourMatch[2] === 'xterm' ? clc.xterm(colourMatch[2]) : clc[colourMatch[1]]);
-    const output = [];
-
-    args.forEach((arg) => {
-
-      // Add the colour.
-      let str = colourFn(arg);
-
-      // Add the styles in turn.
-      for (let s = 0, slen = styles.length; s < slen; s++) {
-        let styleMethodName = styles[s];
-
-        str = clc[styleMethodName](str);
-      }
-
-      output.push(str);
-    });
-
-    console[method].apply(console, output);  // Node doesn't support the spread operator without the harmony flag yet.
   }
 
 };
