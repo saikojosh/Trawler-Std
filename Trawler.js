@@ -71,7 +71,7 @@ module.exports = class Trawler {
       slack: require('./notifications/slack.notification.js'),
     };
 
-    this.log.debug('Trawler ready.');
+    this.log.important(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
 
   }
 
@@ -82,7 +82,7 @@ module.exports = class Trawler {
   init (finish) {
 
     // Console log only.
-    this.log.important(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
+    this.log.debug('Initialising Trawler...');
 
     // Prevent Trawler from exiting immediately after starting the child app.
     process.stdin.resume();
