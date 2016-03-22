@@ -5,6 +5,7 @@
  */
 
 const extender = require('object-extender');
+const Logger = require('../modules/Logger');
 
 module.exports = class StreamBase {
 
@@ -24,6 +25,9 @@ module.exports = class StreamBase {
       env: options.mainConfig.app.env,
       version: options.mainConfig.app.version,
     });
+
+    // Initliase logger.
+    this.log = new Logger(options.mainConfig.debug);
 
   }
 

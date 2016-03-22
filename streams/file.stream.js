@@ -33,10 +33,15 @@ module.exports = class FileStream extends StreamBase {
       maxBackLogs: 6,
     }, options);
 
-    this.logDir = pathify(options.itemConfig.location, options.mainConfig.app.name);
+    this.logDir = pathify(process.cwd(), options.itemConfig.location, options.mainConfig.app.name);
     this.logFilename = options.itemConfig.logName.toLowerCase() + '.log';
     this.stream = null;
     this.internalStream = options.internalStream;
+
+    this.log.debug(`   Log dir: ${this.logDir}`);
+    this.log.debug(`   Log filename: ${this.logFilename}`);
+    this.log.debug(`   Rotate logs: ${this.cfg.rotateLogs}`);
+    this.log.debug(`   Max. back logs: ${this.cfg.maxBackLogs}`);
 
   }
 
@@ -45,6 +50,8 @@ module.exports = class FileStream extends StreamBase {
    * finish(err, stream);
    */
   init (finish) {
+
+    this.log.debug(`   Initialising ${this.cfg.type} stream...`);
 
     // Create the app log dir.
     fs.mkdir(this.logDir, (err) => {
@@ -60,6 +67,7 @@ module.exports = class FileStream extends StreamBase {
         // creation.
         if (!rotated) { this.createStream(); }
 
+        this.log.debug('   Done.');
         return finish(null);
 
       });

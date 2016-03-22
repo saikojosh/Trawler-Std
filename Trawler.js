@@ -35,10 +35,13 @@ module.exports = class Trawler {
         notifications: [],
       },
       cliArgs: [],
+      debug: null,
     }, inputConfig);
 
+    // Are we in debug mode?
+    this.config.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
+
     // Private variables.
-    this.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
     this.hostname = os.hostname();
     this.numRestarts = 0;
     this.internalStream = new stream.PassThrough();
@@ -48,7 +51,7 @@ module.exports = class Trawler {
     this.childAppStartTime = null;
 
     // Initliase logger.
-    this.log = new Logger(this.debug);
+    this.log = new Logger(this.config.debug);
 
     // We can't run ourselves.
     if (this.config.app.name === 'trawler') {

@@ -27,6 +27,10 @@ module.exports = class SlackNotification extends NotificationBase {
       iconEmoji: ':anchor:',
     }, options);
 
+    this.log.debug(`   URL: ${this.cfg.url}`);
+    this.log.debug(`   Username: ${this.cfg.username}`);
+    this.log.debug(`   Icon emoji: ${this.cfg.iconEmoji}`);
+
   }
 
   /*
@@ -35,7 +39,11 @@ module.exports = class SlackNotification extends NotificationBase {
    */
   init (finish) {
 
+    this.log.debug(`   Initialising ${this.cfg.type} notification...`);
+
     /* Nothing required. */
+
+    this.log.debug('   Done.');
 
     return finish(null);
 

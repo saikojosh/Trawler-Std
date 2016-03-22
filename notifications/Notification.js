@@ -7,6 +7,7 @@
 const extender = require('object-extender');
 const moment = require('moment');
 const packageJSON = require('../package.json');
+const Logger = require('../modules/Logger');
 
 module.exports = class NotificationBase {
 
@@ -26,6 +27,9 @@ module.exports = class NotificationBase {
       env: options.mainConfig.app.env,
       version: options.mainConfig.app.version,
     });
+
+    // Initliase logger.
+    this.log = new Logger(options.mainConfig.debug);
 
   }
 
