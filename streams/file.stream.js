@@ -33,7 +33,14 @@ module.exports = class FileStream extends StreamBase {
       maxBackLogs: 6,
     }, options);
 
-    this.logDir = pathify(process.cwd(), options.itemConfig.location, options.mainConfig.app.name);
+    // Where will the logs be stored?
+    if (options.itemConfig.location[0] === '/') {  // Absolute path.
+      this.logDir = pathify(options.itemConfig.location, options.mainConfig.app.name);
+    } else {  // Relative path.
+      this.logDir = pathify(process.cwd(), options.itemConfig.location, options.mainConfig.app.name);
+    }
+
+    // Private variables.
     this.logFilename = options.itemConfig.logName.toLowerCase() + '.log';
     this.stream = null;
     this.internalStream = options.internalStream;
