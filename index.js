@@ -19,6 +19,7 @@ const boat = new Trawler({
     env: process.env.NODE_ENV,
   },
   trawler: extender.copy(packageJSON.trawler) || {},  // Break the reference with the packageJSON object.
+  cliArgs: process.argv.slice(2),
 });
 
 // Ensure we throw exceptions that occur within Trawler rather than swallowing them.
@@ -55,6 +56,7 @@ boat.init((err) => {
 
   // Ensure we tidy up the child app when Trawler quits.
   process.on('SIGINT', () => {
+    console.log('');  // Line break after the ^C in the console.
     process.exit(0);  // When ctrl-c is pressed.
   });
   process.on('exit', () => {

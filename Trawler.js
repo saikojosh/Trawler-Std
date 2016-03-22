@@ -34,6 +34,7 @@ module.exports = class Trawler {
         streams: [],
         notifications: [],
       },
+      cliArgs: [],
     }, inputConfig);
 
     // We can't run ourselves.
@@ -45,6 +46,7 @@ module.exports = class Trawler {
     }
 
     // Private variables.
+    this.debug = Boolean(this.config.cliArgs.indexOf('-debug') > -1 || this.config.cliArgs.indexOf('-d') > -1);
     this.hostname = os.hostname();
     this.numRestarts = 0;
     this.internalStream = new stream.PassThrough();
@@ -62,6 +64,8 @@ module.exports = class Trawler {
     this.notifications = {
       slack: require('./notifications/slack.notification.js'),
     };
+
+    this.logDebug('Trawler ready.');
 
   }
 
@@ -87,6 +91,8 @@ module.exports = class Trawler {
 
         if (err) { return finish(err); }
 
+        this.logDebug('Trawler initialised.');
+
         // Boot the child app.
         this.startApp();
         return finish(null);
@@ -104,9 +110,13 @@ module.exports = class Trawler {
    */
   initSomething (what, finish) {
 
+    this.logDebug(`Initialising ${what}:`);
+
     // Skip if we have nothing to initialise.
     if (!this.config.trawler[what]) { return finish(null); }
     async.forEachOf(this.config.trawler[what], (itemConfig, index, nextItem) => {
+
+      this.logDebug(`>> ${itemConfig.type}...`);
 
       const itemOptions = {
         internalStream: this.internalStream,  // Trawler's internal stream.
@@ -128,6 +138,7 @@ module.exports = class Trawler {
 
     }, (err) => {
       if (err) { return finish(err); }
+      this.logDebug('Done.');
       return finish(err);
     });
 
@@ -267,6 +278,8 @@ module.exports = class Trawler {
    */
   killApp () {
 
+    this.logDebug(`Killing app "${this.config.app.name}"...`);
+
     // Tidy up the child app.
     if (this.childApp) {
       this.childApp.kill();
@@ -276,6 +289,7 @@ module.exports = class Trawler {
     }
 
     // Gracefully exit Trawler.
+    this.logDebug('Goodbye.');
     process.exit(0);
 
   }
@@ -346,7 +360,11 @@ module.exports = class Trawler {
    */
   sendNotifications (options, callback) {
 
+    this.logDebug('Sending notifications:');
+
     async.each(this.config.trawler.notifications, (notification, next) => {
+
+      this.logDebug(`>> ${notification.cfg.type}`);
 
       notification.send(options, (err) => {
         if (err) { return next(err); }
@@ -355,6 +373,7 @@ module.exports = class Trawler {
 
     }, (err) => {
       if (err) { return callback(err); }
+      this.logDebug('Done.');
       return callback(null);
     });
 
@@ -452,6 +471,13 @@ module.exports = class Trawler {
    */
   logError () {
     this.logAsColour('redBright', null, 'error', arguments);
+  }
+
+  /*
+   * Logs out a debug message (only in debug mode).
+   */
+  logDebug () {
+    if (this.debug) { this.logAsColour('blueBright', 'italic', 'info', arguments); }
   }
 
   /*
