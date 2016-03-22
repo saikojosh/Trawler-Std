@@ -39,6 +39,7 @@
   ],
   "dependencies": {
     "async": "1.5.x",
+    "cli-color": "1.1.x",
     "escape-regexp": "0.0.x",
     "moment": "2.11.x",
     "node-fetch": "1.3.x",
