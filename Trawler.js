@@ -46,7 +46,7 @@ module.exports = class Trawler {
     }
 
     // Private variables.
-    this.debug = Boolean(this.config.cliArgs.indexOf('-debug') > -1 || this.config.cliArgs.indexOf('-d') > -1);
+    this.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
     this.hostname = os.hostname();
     this.numRestarts = 0;
     this.internalStream = new stream.PassThrough();
