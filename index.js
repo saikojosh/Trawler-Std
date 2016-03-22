@@ -31,7 +31,10 @@ function handleUncaughtException (unhandledErr) {
   setTimeout(process.exit.bind(null, 1), 3000);  // Prevent error loops.
 
   // Log the Trawler crash.
-  boat.outputLog('trawler', 'Trawler itself has crashed!', () => {  // Ignore any error here.
+  boat.outputLog('trawler', {
+    message: 'Trawler itself has crashed!',
+    trawlerLogType: 'error',
+  }, () => {  // Ignore any error here.
 
     // Attempt to notify our services.
     boat.sendNotifications({
