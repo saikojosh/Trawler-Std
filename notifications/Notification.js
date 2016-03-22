@@ -6,6 +6,7 @@
 
 const extender = require('object-extender');
 const moment = require('moment');
+const packageJSON = require('../package.json');
 
 module.exports = class NotificationBase {
 
@@ -62,13 +63,19 @@ module.exports = class NotificationBase {
 
     const text = [
       ' ',
-      '*Application: `' + appName + '`*',
+      '*Application:*',
+      'Name: `' + appName + '`',
       'Mode: `' + mode + '`',
       'Version: `' + version + '`',
+      ' ',
+      '*Environment:*',
       'Node: `' + process.version + '`',
-      'Boot Time: `' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC` `(uptime ' + moment.utc().diff(options.childAppStartTime) + ' ms)`',
+      'Trawler: `v' + packageJSON.version + '`',
+      ' ',
+      '*Status:*',
+      'Boot Time: ' + (startTime ? '`' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC` `(uptime ' + moment.utc().diff(options.childAppStartTime) + ' ms)`' : '`Not Running.`'),
+      'Restarts: `' + options.numRestarts + '` restart(s).',
       'Code: `' + options.notificationType + '`',
-      'Status: `' + options.numRestarts + '` restart(s).',
       ' ',
       message,
       ' ',
