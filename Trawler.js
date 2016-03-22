@@ -105,9 +105,9 @@ module.exports = class Trawler {
     async.forEachOf(this.config.trawler[what], (itemConfig, index, nextItem) => {
 
       const itemOptions = {
-        internalStream: this.internalStream,
-        mainConfig: this.config,
-        itemConfig,
+        internalStream: this.internalStream,  // Trawler's internal stream.
+        mainConfig: this.config,  // The main Trawler config.
+        itemConfig,  // The config for the stream/notification.
       };
 
       // Create a new item.

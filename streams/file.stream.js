@@ -18,9 +18,9 @@ module.exports = class FileStream extends StreamBase {
   /*
    * Setup the stream.
    * [options]
-   *  mainConfig
-   *  itemConfig
-   *  internalStream
+   *  mainConfig - The main Trawler config.
+   *  itemConfig - The config for the stream.
+   *  internalStream - Trawler's internal stream.
    */
   constructor (options) {
 

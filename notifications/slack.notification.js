@@ -13,9 +13,9 @@ module.exports = class SlackNotification extends NotificationBase {
   /*
    * Setup the provider.
    * [options]
-   *  mainConfig
-   *  itemConfig
-   *  internalStream
+   *  mainConfig - The main Trawler config.
+   *  itemConfig - The config for the notification.
+   *  internalStream - Trawler's internal stream.
    */
   constructor (options) {
 

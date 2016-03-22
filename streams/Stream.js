@@ -11,9 +11,9 @@ module.exports = class StreamBase {
   /*
   * Setup the provider.
   * [options]
-  *  mainConfig
-  *  itemConfig
-  *  internalStream
+  *  mainConfig - The main Trawler config.
+  *  itemConfig - The config for the stream.
+  *  internalStream - Trawler's internal stream.
    */
   constructor (classDefaults, options) {
 
