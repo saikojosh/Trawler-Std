@@ -6,7 +6,7 @@ Trawler `trawler-std` is a simple utility that sits in front of your Node app an
 * Sending admin notifications on app crash (e.g. Slack or email).
 * Automatically restarting your app.
 
-# Setup
+## Setup
 To use Trawler do the following:
 
 1. Install Trawler globally with $ `npm install trawler -g`.
@@ -37,3 +37,8 @@ To use Trawler do the following:
 }
 ```
 3. Run your app like $ `trawler` in your application directory.
+
+## Command Line arguments
+You can use the following arguments when running Trawler:
+
+* `-d` `--debug` - Make Trawler output more detail on the command line - great for debugging and setting up.
