@@ -26,7 +26,7 @@ const boat = new Trawler({
 function handleUncaughtException (unhandledErr) {
 
   // Output the unhandled error and add a timer to force quit the app if we get stuck in an error loop.
-  console.error(unhandledErr.stack);
+  boat.logError(unhandledErr.stack);
   setTimeout(process.exit.bind(null, 1), 3000);  // Prevent error loops.
 
   // Log the Trawler crash.

@@ -8,8 +8,10 @@ const spawn = require('child_process').spawn;
 const os = require('os');
 const stream = require('stream');
 const async = require('async');
+const clc = require('cli-color');
 const extender = require('object-extender');
 const moment = require('moment');
+const packageJSON = require('./package.json');
 
 module.exports = class Trawler {
 
@@ -36,9 +38,9 @@ module.exports = class Trawler {
 
     // We can't run ourselves.
     if (this.config.app.name === 'trawler') {
-      console.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
-      console.error('  $ npm install -g trawler-std');
-      console.error('  $ trawler');
+      this.logError('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
+      this.logError('  $ npm install -g trawler-std');
+      this.logError('  $ trawler');
       process.exit(1);
     }
 
@@ -69,6 +71,9 @@ module.exports = class Trawler {
    * finish(err);
    */
   init (finish) {
+
+    // Console log only.
+    this.logImportant(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
 
     // Prevent Trawler from exiting immediately after starting the child app.
     process.stdin.resume();
@@ -136,9 +141,13 @@ module.exports = class Trawler {
 
     const appName = this.config.app.name;
     const version = this.config.app.version;
+    const message = (this.numRestarts ? `Restarting app (${this.numRestarts + 1} starts)` : 'Starting app') + ` "${appName}" v${version}...`;
 
     // Add starting message to log.
-    this.outputLog('trawler', `Starting app "${appName}" v${version}...`);
+    this.outputLog('trawler', {
+      message,
+      trawlerLogType: 'success',
+    });
 
     // Start the application.
     this.childApp = spawn('node', [this.config.app.mainFile], {
@@ -178,7 +187,10 @@ module.exports = class Trawler {
       function logAppCrash (next) {
 
         // Output to logs.
-        that.outputLog('trawler', `App "${appName}" crashed ${newNumRestarts} time(s)!`);
+        that.outputLog('trawler', {
+          message: `App "${appName}" crashed ${newNumRestarts} time(s)!`,
+          trawlerLogType: 'error',
+        });
 
         return next(null);
 
@@ -227,9 +239,6 @@ module.exports = class Trawler {
       // Attempt to restart.
       if (restartAction === 'restart') {
 
-        // Add restarting number to log.
-        that.outputLog('trawler', `Restart #${newNumRestarts}`);
-
         // Do the restart.
         that.numRestarts = newNumRestarts;
         return that.startApp();
@@ -241,7 +250,10 @@ module.exports = class Trawler {
 
         // Quit the app AND Trawler.
         that.childApp = null;
-        that.outputLog('trawler', `${msg} Quitting...`, () => {  // Ignore error at this point.
+        that.outputLog('trawler', {
+          message: `${msg} Quitting...`,
+          trawlerLogType: 'error',
+        }, () => {  // Ignore error at this point.
           setTimeout(process.exit.bind(null, 1), 1000);  // Slight delay to allow streams to flush.
         });
 
@@ -285,6 +297,7 @@ module.exports = class Trawler {
       message: null,
       data: {},
       trawlerErr: null,
+      trawlerLogType: 'message',
     }, options);
 
     // Construct the JSON output.
@@ -302,7 +315,20 @@ module.exports = class Trawler {
     };
 
     // The 'trawler' entires also get output to the console.
-    if (entryType === 'trawler') { console.log(options.trawlerErr || options.message || options.data); }
+    if (entryType === 'trawler') {
+      let logFn;
+
+      switch (options.trawlerLogType) {
+        case 'error': logFn = this.logError; break;
+        case 'important': logFn = this.logImportant; break;
+        case 'success': logFn = this.logSuccess; break;
+        case 'warning': logFn = this.logWarning; break;
+        case 'message':
+        default: logFn = this.logMessage; break;
+      }
+
+      logFn.call(this, options.trawlerErr || options.message || options.data);
+    }
 
     // Keep the last error in memory in case the app crashes.
     if (entryType === 'app-error') { this.storeChildStderr(options.message); }
@@ -391,6 +417,70 @@ module.exports = class Trawler {
    */
   clearChildStderr () {
     this.childAppStderrBuffer = [];
+  }
+
+  /*
+   * Log out as ordinary text.
+   */
+  logMessage () {
+    console.log.apply(console, arguments);  // Node doesn't support the spread operator without the harmony flag yet.
+  }
+
+  /*
+   * Log out as important text.
+   */
+  logImportant () {
+    this.logAsColour('yellowBright', ['bold', 'underline'], 'log', arguments);
+  }
+
+  /*
+   * Log out as successful text.
+   */
+  logSuccess () {
+    this.logAsColour('greenBright', null, 'log', arguments);
+  }
+
+
+  /*
+   * Log out as warning text.
+   */
+  logWarning () {
+    this.logAsColour('xterm:202', null, 'log', arguments);
+  }
+
+  /*
+   * Logs out an error.
+   */
+  logError () {
+    this.logAsColour('redBright', null, 'error', arguments);
+  }
+
+  /*
+   * Allows us to log to the console in any colour we want.
+   */
+  logAsColour (colour, _styles, method, _arguments) {
+    const styles = (typeof _styles === 'string' ? [_styles] : _styles) || [];
+    const args = Array.prototype.slice.call(_arguments);
+    const colourMatch = colour.match(/^([a-z]+)(?::(\d+))?$/i);
+    const colourFn = (colourMatch[2] === 'xterm' ? clc.xterm(colourMatch[2]) : clc[colourMatch[1]]);
+    const output = [];
+
+    args.forEach((arg) => {
+
+      // Add the colour.
+      let str = colourFn(arg);
+
+      // Add the styles in turn.
+      for (let s = 0, slen = styles.length; s < slen; s++) {
+        let styleMethodName = styles[s];
+
+        str = clc[styleMethodName](str);
+      }
+
+      output.push(str);
+    });
+
+    console[method].apply(console, output);  // Node doesn't support the spread operator without the harmony flag yet.
   }
 
 };
