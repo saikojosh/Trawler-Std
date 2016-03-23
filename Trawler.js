@@ -208,7 +208,7 @@ module.exports = class Trawler {
     } else if (this.numCrashRestarts) {
       message = `Restarting app (${this.numCrashRestarts + 1} starts) ${message}`;
     } else {
-      message = `Starting app  ${message}...`;
+      message = `Starting app  ${message}`;
     }
 
     // Add starting message to log.
@@ -240,6 +240,8 @@ module.exports = class Trawler {
     // Prepare stream handlers for child output.
     this.childApp.stdout.on('data', this.processChildAppOutput.bind(this, 'app-output'));
     this.childApp.stderr.on('data', this.processChildAppOutput.bind(this, 'app-error'));
+
+    this.log.success('Ready!');
 
   }
 
