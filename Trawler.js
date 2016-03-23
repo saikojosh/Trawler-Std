@@ -32,7 +32,7 @@ module.exports = class Trawler {
       trawler: {
         restartOnCrash: null,
         restartOnSourceChange: null,
-        maxRestarts: 0,
+        maxCrashRestarts: 0,
         streams: [],
         notifications: [],
       },
@@ -45,7 +45,7 @@ module.exports = class Trawler {
 
     // Private variables.
     this.hostname = os.hostname();
-    this.numRestarts = 0;
+    this.numCrashRestarts = 0;
     this.internalStream = new stream.PassThrough();
     this.childApp = null;
     this.childAppStderrThreshold = 50;  // 50 milliseconds.
@@ -189,8 +189,8 @@ module.exports = class Trawler {
     // Figure out which message we need to display.
     if (isManualRestart) {
       message = `Restarting app ${message}`;
-    } else if (this.numRestarts) {
-      message = `Restarting app (${this.numRestarts + 1} starts) ${message}`;
+    } else if (this.numCrashRestarts) {
+      message = `Restarting app (${this.numCrashRestarts + 1} starts) ${message}`;
     } else {
       message = `Starting app  ${message}...`;
     }
@@ -233,8 +233,8 @@ module.exports = class Trawler {
     const that = this;
     const appName = this.config.app.name;
     const restartOnCrash = this.config.trawler.restartOnCrash;
-    const maxRestarts = this.config.trawler.maxRestarts;
-    const newNumRestarts = this.numRestarts + 1;
+    const maxCrashRestarts = this.config.trawler.maxCrashRestarts;
+    const newNumCrashRestarts = this.numCrashRestarts + 1;
 
     async.waterfall([
 
@@ -243,7 +243,7 @@ module.exports = class Trawler {
 
         // Output to logs.
         that.outputLog('trawler', {
-          message: `App "${appName}" crashed ${newNumRestarts} time(s)!`,
+          message: `App "${appName}" crashed ${newNumCrashRestarts} time(s)!`,
           trawlerLogType: 'error',
         });
 
@@ -252,9 +252,9 @@ module.exports = class Trawler {
       },
 
       // Stop if restart is not allowed.
-      function checkMaxRestarts (next) {
+      function checkMaxCrashRestarts (next) {
 
-        const tooManyRestarts = (maxRestarts > 0 && newNumRestarts >= maxRestarts);
+        const tooManyRestarts = (maxCrashRestarts > 0 && newNumCrashRestarts >= maxCrashRestarts);
         const restartAction = (restartOnCrash && !tooManyRestarts ? 'restart' : 'quit');
 
         return next(null, tooManyRestarts, restartAction);
@@ -276,7 +276,7 @@ module.exports = class Trawler {
 
         that.sendNotifications({
           notificationType,
-          numRestarts: newNumRestarts + (restartOnCrash && maxRestarts > 0 ? `/${maxRestarts}` : ''),
+          numCrashRestarts: newNumCrashRestarts + (restartOnCrash && maxCrashRestarts > 0 ? `/${maxCrashRestarts}` : ''),
           childAppStderrBuffer: that.getChildStderr(),
           childAppStartTime: that.childAppStartTime,
         }, (err) => {
@@ -295,7 +295,7 @@ module.exports = class Trawler {
       if (restartAction === 'restart') {
 
         // Do the restart.
-        that.numRestarts = newNumRestarts;
+        that.numCrashRestarts = newNumCrashRestarts;
         return that.startApp();
 
       // Can't restart so we quit.
@@ -341,7 +341,7 @@ module.exports = class Trawler {
   }
 
   /*
-   * Kills and restarts the child app. This does not increment numRestarts.
+   * Kills and restarts the child app. This does not increment numCrashRestarts.
    */
   restartApp () {
 

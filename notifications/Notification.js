@@ -47,7 +47,7 @@ module.exports = class NotificationBase {
 
     const options = extender.defaults({
       notificationType: null,
-      numRestarts: null,
+      numCrashRestarts: null,
       childAppStderrBuffer: null,
       childAppStartTime: null,
       trawlerErr: null,
@@ -63,8 +63,8 @@ module.exports = class NotificationBase {
     // Prepare the appropriate message.
     switch (options.notificationType) {
       case 'app-no-restarts': message = 'The app is not allowed to crash because "restartOnCrash" is not set to true.'; break;
-      case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (max ' + options.numRestarts + ' restart(s) allowed).'; stackTrace = options.childAppStderrBuffer; break;
-      case 'app-crash': message = 'The app has crashed *' + options.numRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
+      case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (max ' + options.numCrashRestarts + ' restart(s) allowed).'; stackTrace = options.childAppStderrBuffer; break;
+      case 'app-crash': message = 'The app has crashed *' + options.numCrashRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
       case 'trawler-crash': message = 'Trawler itself has crashed!'; stackTrace = options.trawlerErr.stack; break;
       default: message = 'Something unexpected happened, it\'s probably worth checking out the application to make sure it\s still running.'; break;
     }
@@ -82,7 +82,7 @@ module.exports = class NotificationBase {
       ' ',
       '*Status:*',
       'Boot Time: ' + (startTime ? '`' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC` `(uptime ' + moment.utc().diff(options.childAppStartTime) + ' ms)`' : '`Not running`'),
-      'Restarts: `' + (options.numRestarts || 0) + '` restart(s).',
+      'Restarts: `' + (options.numCrashRestarts || 0) + '` restart(s) due to crashes.',
       'Code: `' + options.notificationType + '`',
       ' ',
       message,
