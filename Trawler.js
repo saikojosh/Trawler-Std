@@ -8,6 +8,7 @@ const spawn = require('child_process').spawn;
 const os = require('os');
 const stream = require('stream');
 const async = require('async');
+const chokidar = require('chokidar');
 const extender = require('object-extender');
 const moment = require('moment');
 const packageJSON = require('./package.json');
@@ -30,6 +31,7 @@ module.exports = class Trawler {
       },
       trawler: {
         restartOnCrash: null,
+        restartOnSourceChange: null,
         maxRestarts: 0,
         streams: [],
         notifications: [],
@@ -49,6 +51,11 @@ module.exports = class Trawler {
     this.childAppStderrThreshold = 50;  // 50 milliseconds.
     this.childAppStderrBuffer = [];
     this.childAppStartTime = null;
+    this.sourceChangeReady = false;
+    this.sourceChangeTimeout = null;
+    this.sourceChangeThreshold = 500;
+    this.sourceChangeWatcher = null;
+    this.sourceChangeIgnoredPaths = [];
 
     // Initliase logger.
     this.log = new Logger(this.config.debug);
@@ -103,9 +110,21 @@ module.exports = class Trawler {
 
         if (err) { return finish(err); }
 
-        this.log.debug('Trawler initialised.');
+        // Start watching for source file changes?
+        if (this.config.trawler.restartOnSourceChange) {
+
+          this.log.debug('Start watching for source file changes...');
+
+          this.sourceChangeWatcher = chokidar.watch('.', {
+            ignored: this.checkSourceChangeIgnoredFiles.bind(this),
+          })
+          .on('ready', () => { this.sourceChangeReady = true; })
+          .on('all', this.onSourceChange.bind(this));
+
+        }
 
         // Boot the child app.
+        this.log.debug('Trawler initialised.');
         this.startApp();
         return finish(null);
 
@@ -160,11 +179,21 @@ module.exports = class Trawler {
   /*
    * Starts the child app.
    */
-  startApp () {
+  startApp (_isManualRestart) {
 
+    const isManualRestart = !Boolean(typeof _isManualRestart === 'undefined');
     const appName = this.config.app.name;
     const version = this.config.app.version;
-    const message = (this.numRestarts ? `Restarting app (${this.numRestarts + 1} starts)` : 'Starting app') + ` "${appName}" v${version}...`;
+    let message = `"${appName}" v${version}...`;
+
+    // Figure out which message we need to display.
+    if (isManualRestart) {
+      message = `Restarting app ${message}`;
+    } else if (this.numRestarts) {
+      message = `Restarting app (${this.numRestarts + 1} starts) ${message}`;
+    } else {
+      message = `Starting app  ${message}...`;
+    }
 
     // Add starting message to log.
     this.outputLog('trawler', {
@@ -196,7 +225,10 @@ module.exports = class Trawler {
   /*
    * Handles the child app when it crashes.
    */
-  onAppCrash (/* code, signal */) {
+  onAppCrash (code, signal) {
+
+    // Skip if the interrupt signal was used to kill the app as this is either command line ^C or restartApp().
+    if (signal === 'SIGINT') { return; }
 
     const that = this;
     const appName = this.config.app.name;
@@ -298,12 +330,83 @@ module.exports = class Trawler {
       this.childApp.kill();
       this.childApp = null;
       this.childAppStartTime = null;
+      this.lastSourceChange = null;
       this.clearChildStderr();
     }
 
     // Gracefully exit Trawler.
     this.log.debug('Goodbye.');
     process.exit(0);
+
+  }
+
+  /*
+   * Kills and restarts the child app. This does not increment numRestarts.
+   */
+  restartApp () {
+
+    // Kill and tidy up.
+    this.childApp.kill('SIGINT');  // Kill using the interrupt signal so we can capture it and prevent a restartOnCrash.
+    this.childApp = null;
+    this.lastSourceChange = null;
+    this.clearChildStderr();
+
+    // Restart.
+    this.startApp(true);
+
+  }
+
+  /*
+   * Restarts the app when a source file changes.
+   */
+  onSourceChange (event, path) {
+
+    // Skip if no child app is running.
+    if (!this.childApp || !this.sourceChangeReady) { return; }
+
+    // Restart after a delay.
+    if (this.sourceChangeTimeout) { clearTimeout(this.sourceChangeTimeout); }
+    this.sourceChangeTimeout = setTimeout(() => {
+      this.log.success('Source changes detected!');
+      this.restartApp();
+    }, this.sourceChangeThreshold);
+
+  }
+
+  /*
+   * The 'ignored' handler for chokidar.
+   */
+  checkSourceChangeIgnoredFiles (checkPath, stats) {  // Must provide both arguments here for the method to get called.
+
+    // Ignore .dot files.
+    if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
+
+    // Check against each of the ignored files.
+    for (let i = 0, ilen = this.sourceChangeIgnoredPaths.length; i < ilen; i++) {
+      const ignoredPath = this.sourceChangeIgnoredPaths[i];
+
+      if (checkPath.match(ignoredPath)) { return true; }  // 'ignoredPath' is either a string or a RegExp.
+    }
+
+    // This path is allowed.
+    return false;
+
+  }
+
+  /*
+   * Prevents the source change watcher from checking the given dir. Used by the file stream to prevent the logs dir
+   * from triggering app restarts. Either a string or RegExp can be passed in.
+   * [Usage]
+   *  addIgnoredSourceDir('/path/to/dir');
+   *  addIgnoredSourceDir(/\/path\/to\/dir/);
+   */
+  addIgnoredSourceDir (dir) {
+
+    // Skip if we aren't watching files for changes.
+    if (!this.config.trawler.restartOnSourceChange) { return; }
+
+    // Add the dir to ignore.
+    if (this.sourceChangeIgnoredPaths.indexOf(dir) === -1) { this.sourceChangeIgnoredPaths.push(dir); }
 
   }
 

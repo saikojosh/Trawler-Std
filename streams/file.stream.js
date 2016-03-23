@@ -40,6 +40,9 @@ module.exports = class FileStream extends StreamBase {
       this.logDir = pathify(process.cwd(), options.itemConfig.location, options.mainConfig.app.name);
     }
 
+    // Ignore the logs directory for file changes.
+    this.boat.addIgnoredSourceDir(options.itemConfig.location);
+
     // Private variables.
     this.logFilename = options.itemConfig.logName.toLowerCase() + '.log';
     this.stream = null;
