@@ -134,6 +134,7 @@ module.exports = class Trawler {
         internalStream: this.internalStream,  // Trawler's internal stream.
         mainConfig: this.config,  // The main Trawler config.
         itemConfig,  // The config for the stream/notification.
+        boat: this,  // The instance of Trawler.
       };
 
       // Create a new item.

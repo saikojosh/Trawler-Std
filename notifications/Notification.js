@@ -12,11 +12,12 @@ const Logger = require('../modules/Logger');
 module.exports = class NotificationBase {
 
   /*
-  * Setup the provider.
-  * [options]
-  *  mainConfig - The main Trawler config.
-  *  itemConfig - The config for the notification.
-  *  internalStream - Trawler's internal stream.
+   * Setup the provider.
+   * [options]
+   *  mainConfig - The main Trawler config.
+   *  itemConfig - The config for the notification.
+   *  internalStream - Trawler's internal stream.
+   *  boat - The instance of Trawler.
    */
   constructor (classDefaults, options) {
 
@@ -27,6 +28,9 @@ module.exports = class NotificationBase {
       env: options.mainConfig.app.env,
       version: options.mainConfig.app.version,
     });
+
+    // Store the instance of Trawler.
+    this.boat = options.boat;
 
     // Initliase logger.
     this.log = new Logger(options.mainConfig.debug);
