@@ -44,11 +44,16 @@ module.exports = class Trawler {
     // Are we in debug mode?
     this.config.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
 
-    // Are we overriding the environment from the CLI?
-    const envArgIndex = (this.config.cliArgs.indexOf('--e') ? this.config.cliArgs.indexOf('--e') : this.config.cliArgs.indexOf('--env'));
+    // Initliase logger.
+    this.log = new Logger(this.config.debug);
+    this.log.important(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
 
-    if (envArgIndex > -1 && this.config.cliArgs[envArgIndex + 1]) {
+    // Are we overriding the environment from the CLI?
+    const envArgIndex = (this.config.cliArgs.indexOf('-e') > -1 ? this.config.cliArgs.indexOf('-e') : this.config.cliArgs.indexOf('--env'));
+
+    if (envArgIndex > -1 && this.config.cliArgs[envArgIndex + 1] && !this.config.cliArgs[envArgIndex + 1].match(/^\-/)) {
       this.config.app.env = this.config.cliArgs[envArgIndex + 1].toLowerCase();
+      this.log.debug(`Forcing app environment to be "${this.config.app.env}".`);
     }
 
     // Private variables.
@@ -64,9 +69,6 @@ module.exports = class Trawler {
     this.sourceChangeThreshold = 500;
     this.sourceChangeWatcher = null;
     this.sourceChangeIgnoredPaths = [];
-
-    // Initliase logger.
-    this.log = new Logger(this.config.debug);
 
     // We can't run ourselves.
     if (this.config.app.name === 'trawler') {
@@ -85,9 +87,6 @@ module.exports = class Trawler {
     this.notifications = {
       slack: require('./notifications/slack.notification.js'),
     };
-
-    // Initial log output.
-    this.log.important(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
 
     // Log if we have no streams specified.
     if (!this.config.trawler.streams || !this.config.trawler.streams.length) {
