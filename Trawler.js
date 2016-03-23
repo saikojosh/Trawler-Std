@@ -71,7 +71,13 @@ module.exports = class Trawler {
       slack: require('./notifications/slack.notification.js'),
     };
 
+    // Initial log output.
     this.log.important(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
+
+    // Log if we have no streams specified.
+    if (!this.config.trawler.streams || !this.config.trawler.streams.length) {
+      this.log.warning('No streams specified: the app\'s log output will be lost.');
+    }
 
   }
 
@@ -367,8 +373,15 @@ module.exports = class Trawler {
    */
   sendNotifications (options, callback) {
 
+    // Skip if we have no notifications to send.
+    if (!this.config.trawler.notifications || !this.config.trawler.notifications.length) {
+      this.log.debug('Unable to send notifications as no services have been specified.');
+      return callback(null);
+    }
+
     this.log.debug('Sending notifications:');
 
+    // Notify each endpoint in turn.
     async.each(this.config.trawler.notifications, (notification, next) => {
 
       this.log.debug(`>> ${notification.cfg.type}`);
