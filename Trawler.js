@@ -44,6 +44,13 @@ module.exports = class Trawler {
     // Are we in debug mode?
     this.config.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
 
+    // Are we overriding the environment from the CLI?
+    const envArgIndex = (this.config.cliArgs.indexOf('--e') ? this.config.cliArgs.indexOf('--e') : this.config.cliArgs.indexOf('--env'));
+
+    if (envArgIndex > -1 && this.config.cliArgs[envArgIndex + 1]) {
+      this.config.app.env = this.config.cliArgs[envArgIndex + 1].toLowerCase();
+    }
+
     // Private variables.
     this.hostname = os.hostname();
     this.numCrashRestarts = 0;
@@ -203,8 +210,13 @@ module.exports = class Trawler {
       trawlerLogType: 'success',
     });
 
+    // Prepare the CLI arguments to start the app with.
+    const spawnArgs = [this.config.app.mainFile];
+
+    if (this.envOverridden) { spawnArgs.push('--env', this.config.app.env); }
+
     // Start the application.
-    this.childApp = spawn('node', [this.config.app.mainFile], {
+    this.childApp = spawn('node', spawnArgs, {
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],  // stdin, stdout, stderr.
     });
