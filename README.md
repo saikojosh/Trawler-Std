@@ -12,35 +12,35 @@ To use Trawler do the following:
 
 1. Install Trawler globally with `npm install -g trawler-std`.
 2. Setup your application's `package.json` as follows:
-  ```javascript
-  {
-    "name":    "{appName}",
-    "version": "0.1.5",
-    "main":    "{filename}",
-    ...
-    "trawler": {
-      "restartOnCrash": true,  // Optional.
-      "restartOnSourceChange": true,  // Optional.
-      "maxCrashRestarts": 5,  // Optional, 0 = unlimited restarts, default = 0.
-      "longPollSourceChanges": true,  // Optional, default = false.
-      "streams": [{
-        "type": "file",
-        "environments": ["staging", "production"],  // Optional.
-        "location": "logs",
-        "logName": "crash",  // Optional.
-        "rotateLogs": true,  // Optional.
-        "maxBackLogs": 6  // Optional.
-      }],
-      "notifications": [{
-        "type": "slack",
-        "environments": ["production"],  // Optional.
-        "url": "{webhookURL}",
-        "username": "Trawler",  // Optional.
-        "iconEmoji": ":anchor:"  // Optional.
-      }]
-    }
+```javascript
+{
+  "name":    "{appName}",
+  "version": "0.1.5",
+  "main":    "{filename}",
+  ...
+  "trawler": {
+    "restartOnCrash": true,  // Optional.
+    "restartOnSourceChange": true,  // Optional.
+    "maxCrashRestarts": 5,  // Optional, 0 = unlimited restarts, default = 0.
+    "longPollSourceChanges": true,  // Optional, default = false.
+    "streams": [{
+      "type": "file",
+      "environments": ["staging", "production"],  // Optional.
+      "location": "logs",
+      "logName": "crash",  // Optional.
+      "rotateLogs": true,  // Optional.
+      "maxBackLogs": 6  // Optional.
+    }],
+    "notifications": [{
+      "type": "slack",
+      "environments": ["production"],  // Optional.
+      "url": "{webhookURL}",
+      "username": "Trawler",  // Optional.
+      "iconEmoji": ":anchor:"  // Optional.
+    }]
   }
-  ```
+}
+```
 3. From the command line run your app with `trawler`.
 
 ## Package.json Configuration
