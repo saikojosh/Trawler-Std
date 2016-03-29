@@ -51,14 +51,23 @@ module.exports = class Trawler {
     // Initliase logger.
     this.log = new Logger(this.config.debug);
     this.log.title(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
-    this.log.important(`App environment: "${this.config.app.env}"`);
+
+    // We can't run ourselves.
+    if (this.config.app.name === 'trawler-std') {
+      this.log.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
+      this.log.error('  $ npm install -g trawler-std');
+      this.log.error('  $ trawler');
+      process.exit(1);
+    }
 
     // Are we overriding the environment from the CLI?
     const envArgIndex = (this.config.cliArgs.indexOf('-e') > -1 ? this.config.cliArgs.indexOf('-e') : this.config.cliArgs.indexOf('--env'));
 
     if (envArgIndex > -1 && this.config.cliArgs[envArgIndex + 1] && !this.config.cliArgs[envArgIndex + 1].match(/^\-/)) {
-      this.config.app.env = this.config.cliArgs[envArgIndex + 1].toLowerCase();
-      this.log.debug(`Forcing app environment to be "${this.config.app.env}".`);
+      this.config.app.env = this.config.cliArgs[envArgIndex + 1];
+      this.log.important(`App environment: "${this.config.app.env}" (overridden by CLI argument).`);
+    } else {
+      this.log.important(`App environment: "${this.config.app.env}".`);
     }
 
     // Are we overriding the console.* configs via the CLI?
@@ -82,14 +91,6 @@ module.exports = class Trawler {
     this.sourceChangeThreshold = 500;
     this.sourceChangeWatcher = null;
     this.sourceChangeIgnoredPaths = [];
-
-    // We can't run ourselves.
-    if (this.config.app.name === 'trawler-std') {
-      this.log.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
-      this.log.error('  $ npm install -g trawler-std');
-      this.log.error('  $ trawler');
-      process.exit(1);
-    }
 
     // Streams.
     this.streams = {
