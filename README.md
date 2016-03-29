@@ -109,7 +109,7 @@ You can use the following arguments when running Trawler:
 ## In Detail
 
 ### Log Output
-If you configure the `file` stream then the stdout and stderr of your application will be combined and written to the same log file. It's recommended that your application uses a logging framework such as [Bunyan ](https://www.npmjs.com/package/bunyan) to manage log output instead of relying on the `console.*` methods.
+If you configure the `file` stream then the stdout and stderr of your application will be combined and written to the same log file. It's recommended that your application uses a logging framework such as [Bunyan ](https://www.npmjs.com/package/bunyan) to manage log output instead of relying on the `console.*` methods. This will prevent your Trawler log file from becoming bloated.
 
 However, if you want to see your application's stdout and stderr in the console you can set the `console.stdout` and `console.stderr` config properties to true in `package.json`, or use the `--stdout`, `--stderr` or `--stdall` CLI arguments.
 
