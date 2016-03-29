@@ -34,6 +34,10 @@ module.exports = class Trawler {
         restartOnSourceChange: null,
         maxCrashRestarts: 0,
         longPollSourceChanges: false,
+        console: {
+          stdout: false,
+          stderr: false,
+        },
         streams: [],
         notifications: [],
       },
@@ -55,6 +59,14 @@ module.exports = class Trawler {
     if (envArgIndex > -1 && this.config.cliArgs[envArgIndex + 1] && !this.config.cliArgs[envArgIndex + 1].match(/^\-/)) {
       this.config.app.env = this.config.cliArgs[envArgIndex + 1].toLowerCase();
       this.log.debug(`Forcing app environment to be "${this.config.app.env}".`);
+    }
+
+    // Are we overriding the console.* configs via the CLI?
+    if (this.config.cliArgs.indexOf('--stdout') > -1 || this.config.cliArgs.indexOf('--stdall') > -1) {
+      this.config.trawler.console.stdout = true;
+    }
+    if (this.config.cliArgs.indexOf('--stderr') > -1 || this.config.cliArgs.indexOf('--stdall') > -1) {
+      this.config.trawler.console.stderr = true;
     }
 
     // Private variables.
@@ -531,7 +543,17 @@ module.exports = class Trawler {
    * Converts output from the child app to usable log data.
    */
   processChildAppOutput (entryType, buf) {
-    this.outputLog(entryType, buf.toString());
+
+    // Convert to string and remove the trailing line break.
+    const bufstr = buf.toString().replace(/\n$/, '');
+
+    // Are we outputting to the console?
+    if (entryType === 'app-output' && this.config.trawler.console.stdout) { this.log.message(bufstr); }
+    if (entryType === 'app-error' && this.config.trawler.console.stderr) { this.log.message(bufstr); }
+
+    // Pass to the log.
+    this.outputLog(entryType, bufstr);
+
   }
 
   /*
