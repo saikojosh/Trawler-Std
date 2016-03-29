@@ -28,8 +28,15 @@ module.exports = class Logger {
   /*
    * Log out as important text.
    */
-  important () {
+  title () {
     this.logAsColour('yellowBright', ['bold', 'underline'], 'log', arguments);
+  }
+
+  /*
+   * Log out as important text.
+   */
+  important () {
+    this.logAsColour('yellowBright', null, 'log', arguments);
   }
 
   /*
