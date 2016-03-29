@@ -32,7 +32,7 @@ function handleUncaughtException (unhandledErr) {
 
   // Log the Trawler crash.
   boat.outputLog('trawler', {
-    message: 'Trawler itself has crashed!',
+    message: `Trawler (v${packageJSON.version}) itself has crashed!`,
     trawlerLogType: 'error',
   }, () => {  // Ignore any error here.
 
