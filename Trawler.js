@@ -33,7 +33,7 @@ module.exports = class Trawler {
         restartOnCrash: null,
         restartOnSourceChange: null,
         maxCrashRestarts: 0,
-        longPollSourceChanges: false,
+        pollSourceChanges: false,
         console: {
           stdout: false,
           stderr: false,
@@ -137,7 +137,7 @@ module.exports = class Trawler {
 
           this.sourceChangeWatcher = chokidar.watch('.', {
             ignored: this.checkSourceChangeIgnoredFiles.bind(this),
-            usePolling: this.config.trawler.longPollSourceChanges,
+            usePolling: this.config.trawler.pollSourceChanges,
           })
           .on('ready', () => { this.sourceChangeReady = true; })
           .on('all', this.onSourceChange.bind(this));
