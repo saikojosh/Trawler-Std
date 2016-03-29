@@ -173,7 +173,7 @@ module.exports = class Trawler {
       // This stream/notification is not enabled for the app's current environment.
       if (itemConfig.environments && itemConfig.environments.length && itemConfig.environments.indexOf(this.config.app.env) === -1) {
         this.log.debug('   Disabled due to "environments" property.');
-        delete this.config.trawler[what][index];
+        this.config.trawler[what][index] = null;
         return nextItem(null);
       }
 
@@ -197,9 +197,21 @@ module.exports = class Trawler {
       });
 
     }, (err) => {
+
       if (err) { return finish(err); }
+
+      // Remove all streams/notifications that are nulled.
+      const newWhatArr = [];
+
+      for (let i = 0, ilen = this.config.trawler[what].length; i < ilen; i++) {
+        if (this.config.trawler[what][i]) { newWhatArr.push(this.config.trawler[what][i]); }
+      }
+      this.config.trawler[what] = newWhatArr;
+
+      // Continue.
       this.log.debug('Done.');
       return finish(err);
+
     });
 
   }
