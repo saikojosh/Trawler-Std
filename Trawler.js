@@ -47,6 +47,7 @@ module.exports = class Trawler {
     // Initliase logger.
     this.log = new Logger(this.config.debug);
     this.log.title(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
+    this.log.important(`App environment: "${this.config.app.env}"`);
 
     // Are we overriding the environment from the CLI?
     const envArgIndex = (this.config.cliArgs.indexOf('-e') > -1 ? this.config.cliArgs.indexOf('-e') : this.config.cliArgs.indexOf('--env'));
