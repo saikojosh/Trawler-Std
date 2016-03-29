@@ -84,7 +84,7 @@ module.exports = class Trawler {
     this.sourceChangeIgnoredPaths = [];
 
     // We can't run ourselves.
-    if (this.config.app.name === 'trawler') {
+    if (this.config.app.name === 'trawler-std') {
       this.log.error('You can\'t run Trawler on itself. You must install Trawler globally and run it on another app.');
       this.log.error('  $ npm install -g trawler-std');
       this.log.error('  $ trawler');
