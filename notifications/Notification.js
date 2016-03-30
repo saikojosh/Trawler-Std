@@ -74,7 +74,7 @@ module.exports = class NotificationBase {
 
     const text = [
       ' ',
-      `*ALERT: ${moment.utc().format('YYYY-MM-DD HH:mm:ss.SSS')} UTC*`,
+      `*ALERT: ${moment.utc().format('YYYY-MM-DD @ HH:mm:ss')} UTC*`,
       ' ',
       '*Application:*',
       'Name: `' + appName + '`',
@@ -86,7 +86,8 @@ module.exports = class NotificationBase {
       'Trawler: `v' + packageJSON.version + '`',
       ' ',
       '*Status:*',
-      'Boot Time: ' + (startTime ? '`' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC` `(uptime ' + moment.utc().diff(options.childAppStartTime) + ' ms)`' : '`Not running`'),
+      'Boot Time: ' + (startTime ? '`' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC`' : '`Not running`'),
+      'Uptime:  ' + (startTime ? '`' + options.childAppStartTime.fromNow(true) + '` or `' + moment.utc().diff(options.childAppStartTime) + ' ms`' : '`Not running`'),
       'Restarts: `' + (options.numCrashRestarts || 0) + '` restart(s) due to crashes.',
       'Code: `' + options.notificationType + '`',
       ' ',
