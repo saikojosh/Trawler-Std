@@ -6,7 +6,7 @@
 
 const extender = require('object-extender');
 const moment = require('moment');
-const packageJSON = require('..package.json');
+const packageJSON = require('../package.json');
 const Logger = require('../modules/Logger');
 
 module.exports = class NotificationBase {
@@ -73,6 +73,8 @@ module.exports = class NotificationBase {
     }
 
     const text = [
+      ' ',
+      `*ALERT: ${moment.utc().format('YYYY-MM-DD HH:mm:ss.SSS')} UTC*`,
       ' ',
       '*Application:*',
       'Name: `' + appName + '`',
