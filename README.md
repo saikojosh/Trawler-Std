@@ -23,6 +23,7 @@ To use Trawler do the following:
     "restartOnSourceChange": true,  // Optional.
     "maxCrashRestarts": 5,  // Optional, 0 = unlimited restarts, default = 0.
     "pollSourceChanges": true,  // Optional, default = false.
+    "sourceChangeThreshold": 200,  // Optional, default = 500.
     "console": {
       "stdout": true,  // Optional, default = false.
       "stderr": true  // Optional, default = false.
