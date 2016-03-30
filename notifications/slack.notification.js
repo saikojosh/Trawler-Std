@@ -25,6 +25,7 @@ module.exports = class SlackNotification extends NotificationBase {
       url: null,
       username: 'Trawler',
       iconEmoji: ':anchor:',
+      attention: [],
     }, options);
 
     this.log.debug(`   URL: ${this.cfg.url}`);
@@ -55,7 +56,23 @@ module.exports = class SlackNotification extends NotificationBase {
    */
   send (_options, _finish) {
 
-    super.send(_options, _finish, (err, options, finish, appName, mode, version, text) => {
+    super.send(_options, _finish, (err, options, finish, appName, mode, version, _text) => {
+
+      let attention = (Array.isArray(this.cfg.attention) ? this.cfg.attention : (typeof this.cfg.attention === 'string' ? [this.cfg.attention] : null));
+      let text = _text;
+
+      if (attention && attention.length) {
+
+        // Ensure each attention string is actually a Slack username.
+        for (let a = 0, alen = attention.length; a < alen; a++) {
+          if (attention[a][0] === '@') { continue; }
+          attention[a] = `@${attention[a]}`;
+        }
+
+        // Append the list of usernames to the message text.
+        text += `\n${attention.join(', ')}\n`;
+
+      }
 
       // Post to Slack.
       fetch(this.cfg.url, {
