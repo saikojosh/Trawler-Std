@@ -34,6 +34,7 @@ module.exports = class Trawler {
         restartOnSourceChange: null,
         maxCrashRestarts: 0,
         pollSourceChanges: false,
+        sourceChangeThreshold: 500,
         console: {
           stdout: false,
           stderr: false,
@@ -88,7 +89,6 @@ module.exports = class Trawler {
     this.childAppStartTime = null;
     this.sourceChangeReady = false;
     this.sourceChangeTimeout = null;
-    this.sourceChangeThreshold = 500;
     this.sourceChangeWatcher = null;
     this.sourceChangeIgnoredPaths = [];
 
@@ -417,7 +417,7 @@ module.exports = class Trawler {
     this.sourceChangeTimeout = setTimeout(() => {
       this.log.success('Source changes detected!');
       this.restartApp();
-    }, this.sourceChangeThreshold);
+    }, this.config.trawler.sourceChangeThreshold);
 
   }
 
