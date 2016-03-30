@@ -6,7 +6,7 @@
 
 const extender = require('object-extender');
 const moment = require('moment');
-const appPackageJSON = require('../modules/appPackageJSON');
+const packageJSON = require('..package.json');
 const Logger = require('../modules/Logger');
 
 module.exports = class NotificationBase {
@@ -78,7 +78,7 @@ module.exports = class NotificationBase {
       ' ',
       '*Environment:*',
       'Node: `' + process.version + '`',
-      'Trawler: `v' + appPackageJSON.version + '`',
+      'Trawler: `v' + packageJSON.version + '`',
       ' ',
       '*Status:*',
       'Boot Time: ' + (startTime ? '`' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC` `(uptime ' + moment.utc().diff(options.childAppStartTime) + ' ms)`' : '`Not running`'),
