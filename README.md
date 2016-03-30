@@ -75,11 +75,11 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 ### Configuring Streams and Notifications
 Trawler grabs the output of your app but it needs to know what to do with it. Streams are Trawler's way of knowing where to send the data once it has it and are usually used for logging to disk. Notifications are how Trawler notifies you of problems for example sending a Slack notification. You can have multiple streams/notifications of the same type.
 
-| Property               | Default | Description |
-|------------------------|---------|-------------|
-| type                   |         | The type of stream/notification e.g. `file` or `slack`. |
-| environments[]         |         | To **limit** this stream/notification to run **only** in specific environments, specify an array of environment strings. By default streams/notifications will run in all environments. |
-| excludedEnvironments[] |         | To **prevent** this stream/notification from running in specific environments, specify an array of environments strings. |
+| Property              | Default | Description |
+|-----------------------|---------|-------------|
+| type                  |         | The type of stream/notification e.g. `file` or `slack`. |
+| environments[]        |         | To **limit** this stream/notification to run **only** in specific environments, specify an array of environment strings. By default streams/notifications will run in all environments. |
+| excludeEnvironments[] |         | To **prevent** this stream/notification from running in specific environments, specify an array of environments strings. |
 
 #### Streams
 
