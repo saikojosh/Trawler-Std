@@ -171,9 +171,21 @@ module.exports = class Trawler {
 
       this.log.debug(`>> ${itemConfig.type}...`);
 
-      // This stream/notification is not enabled for the app's current environment.
-      if (itemConfig.environments && itemConfig.environments.length && itemConfig.environments.indexOf(this.config.app.env) === -1) {
+      const envList = itemConfig.environments;
+      const exludeEnvList = itemConfig.excludeEnvironments;
+
+      // Positive environment check: the current environment must be in the stream/notification's "environments"
+      // property OR no "environments" property specified.
+      if (envList && envList.length && envList.indexOf(this.config.app.env) === -1) {
         this.log.debug('   Disabled due to "environments" property.');
+        this.config.trawler[what][index] = null;
+        return nextItem(null);
+      }
+
+      // Negative environment check: the current environment must not be in the stream/notification's
+      // "excludeEnvironments" property OR no "excludeEnvironments" property specified.
+      if (exludeEnvList && exludeEnvList.length && exludeEnvList.indexOf(this.config.app.env) > -1) {
+        this.log.debug('   Disabled due to "excludeEnvironments" property.');
         this.config.trawler[what][index] = null;
         return nextItem(null);
       }
