@@ -98,11 +98,12 @@ Writes your app's output to a file on disk in a JSON-like format similar to [Bun
 ##### Slack:
 Sends a notification to a Slack channel when your app crashes.
 
-| Property  | Default   | Description |
-|-----------|-----------|-------------|
-| url       |           | Add your Slack webhook URL in here. |
-| username  | "Trawler" | Specify a custom username to display in Slack.  |
-| iconEmoji | "\:anchor\:" :anchor: | Specify a custom Slack emoji to use next to the username in Slack. |
+| Property    | Default   | Description |
+|----------==-|-----------|-------------|
+| url         |           | Add your Slack webhook URL in here. |
+| username    | "Trawler" | Specify a custom username to display in Slack.  |
+| iconEmoji   | "\:anchor\:" :anchor: | Specify a custom Slack emoji to use next to the username in Slack. |
+| attention[] |           | Specify an array of Slack usernames to notify. |
 
 
 ## Command Line Arguments
