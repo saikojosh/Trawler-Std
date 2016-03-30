@@ -5,20 +5,20 @@
  * TRAWLER (entry point).
  */
 
-const pathify = require('path').join;
-const packageJSON = require(pathify(process.cwd(), 'package.json'));
+const packageJSON = require('./package.json');
+const appPackageJSON = require('./modules/appPackageJSON');
 const extender = require('object-extender');
 const Trawler = require('./Trawler');
 
 // Prepare Trawler.
 const boat = new Trawler({
   app: {
-    name: packageJSON.name,
-    version: packageJSON.version,
-    mainFile: packageJSON.main,
+    name: appPackageJSON.name,
+    version: appPackageJSON.version,
+    mainFile: appPackageJSON.main,
     env: process.env.NODE_ENV,
   },
-  trawler: extender.copy(packageJSON.trawler) || {},  // Break the reference with the packageJSON object.
+  trawler: extender.copy(appPackageJSON.trawler) || {},  // Break the reference with the app's packageJSON object.
   cliArgs: process.argv.slice(2),
 });
 
