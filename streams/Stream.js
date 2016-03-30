@@ -30,6 +30,9 @@ module.exports = class StreamBase {
     // Store the instance of Trawler.
     this.boat = options.boat;
 
+    // Allow us to check whether this stream has been set up.
+    this.isInitialised = true;
+
     // Initliase logger.
     this.log = new Logger(options.mainConfig.debug);
 

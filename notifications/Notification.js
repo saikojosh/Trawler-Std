@@ -32,6 +32,9 @@ module.exports = class NotificationBase {
     // Store the instance of Trawler.
     this.boat = options.boat;
 
+    // Allow us to check whether this notification has been set up.
+    this.isInitialised = true;
+
     // Initliase logger.
     this.log = new Logger(options.mainConfig.debug);
 

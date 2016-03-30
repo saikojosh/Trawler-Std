@@ -537,7 +537,14 @@ module.exports = class Trawler {
     // Notify each endpoint in turn.
     async.each(this.config.trawler.notifications, (notification, next) => {
 
-      this.log.debug(`>> ${notification.cfg.type}`);
+      // If Trawler itself crashes before notifications are initialised.
+      if (notification.isInitialised) {
+        this.log.debug(`>> ${notification.cfg.type}`);
+      } else {
+        this.log.debug(`>> ${notification.type}`);
+        this.log.debug('   Unable to send notification as the provider has not been initialised yet.');
+        return next(null);
+      }
 
       notification.send(options, (err) => {
         if (err) { return next(err); }
