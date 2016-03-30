@@ -7,4 +7,13 @@
 
 const pathify = require('path').join;
 
-module.exports = require(pathify(process.cwd(), 'package.json'));
+try {
+  module.exports = require(pathify(process.cwd(), 'package.json'));
+} catch (err) {
+  if (err.code === 'MODULE_NOT_FOUND') {
+    console.log('package.json not found - are you sure this directory contains a Node application?');
+    process.exit(1);
+  } else {
+    throw err;
+  }
+}
