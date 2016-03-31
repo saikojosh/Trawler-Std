@@ -134,21 +134,33 @@ module.exports = class Trawler {
         // Start watching for source file changes?
         if (this.config.trawler.restartOnSourceChange) {
 
-          this.log.debug('Start watching for source file changes...');
+          this.log.debug('Preparing to watch for source file changes...');
 
           this.sourceChangeWatcher = chokidar.watch('.', {
             ignored: this.checkSourceChangeIgnoredFiles.bind(this),
             usePolling: this.config.trawler.pollSourceChanges,
+            ignoreInitial: true,  //  Allow Chokidar's 'ready' event to fire as soon as possible.
           })
-          .on('ready', () => { this.sourceChangeReady = true; })
+          .on('ready', () => {
+
+            this.sourceChangeReady = true;
+
+            // Boot the child app.
+            this.log.debug('Trawler initialised.');
+            this.startApp();
+            return finish(null);
+
+          })
           .on('all', this.onSourceChange.bind(this));
 
-        }
+        } else {
 
-        // Boot the child app.
-        this.log.debug('Trawler initialised.');
-        this.startApp();
-        return finish(null);
+          // Boot the child app.
+          this.log.debug('Trawler initialised.');
+          this.startApp();
+          return finish(null);
+
+        }
 
       });
 
