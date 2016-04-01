@@ -118,7 +118,7 @@ module.exports = class Trawler {
   init (finish) {
 
     // Console log only.
-    this.log.debug('Initialising Trawler...');
+    this.log.success('Initialising Trawler...');
 
     // Prevent Trawler from exiting immediately after starting the child app.
     process.stdin.resume();
