@@ -450,7 +450,7 @@ module.exports = class Trawler {
   /*
    * The 'ignored' handler for chokidar.
    */
-  checkSourceChangeIgnoredFiles (checkPath, stats) {  // Must provide both arguments here for the method to get called.
+  checkSourceChangeIgnoredFiles (checkPath, stats) {  // WARNING: must provide both arguments here for the method to get called.
 
     // Ignore .dot files.
     if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
