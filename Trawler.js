@@ -532,7 +532,8 @@ module.exports = class Trawler {
       }
 
       // We must call the log function with the correct context.
-      logFn.call(this.log, options.trawlerErr || options.message || options.data);
+      logFn.call(this.log, options.message || options.data);
+      if (options.trawlerLogType === 'error' && options.trawlerErr) { this.log.error(options.trawlerErr); }
     }
 
     // Keep the last error in memory in case the app crashes.
