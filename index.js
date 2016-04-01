@@ -22,13 +22,18 @@ const boat = new Trawler({
   cliArgs: process.argv.slice(2),
 });
 
+function processExitOnException (code) {
+  boat.log.debug('Goodbye.');
+  process.exit(code || 1);
+}
+
 // Ensure we throw exceptions that occur within Trawler rather than swallowing them.
 // We bind this method to 'boat' (the Trawler instance) below.
 function handleUncaughtException (unhandledErr) {
 
   // Output the unhandled error and add a timer to force quit the app if we get stuck in an error loop.
   boat.log.error(unhandledErr.stack);
-  setTimeout(process.exit.bind(null, 1), 3000);  // Prevent error loops.
+  setTimeout(processExitOnException.bind(null, 1), 3000);  // Prevent error loops.
 
   // Log the Trawler crash.
   boat.outputLog('trawler', {
@@ -43,7 +48,7 @@ function handleUncaughtException (unhandledErr) {
     }, () => {  // Ignore any error here.
 
       // Crash Trawler with the unhandled error.
-      setTimeout(process.exit.bind(null, 1), 1000);  // Slight delay to allow streams to flush.
+      setTimeout(processExitOnException.bind(null, 1), 1000);  // Slight delay to allow streams to flush.
 
     });
 
