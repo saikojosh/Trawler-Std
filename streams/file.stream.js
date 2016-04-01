@@ -31,6 +31,7 @@ module.exports = class FileStream extends StreamBase {
       logName: 'crash',
       rotateLogs: true,
       maxBackLogs: 6,
+      crashOnWriteError: true,
     }, options);
 
     // Where will the logs be stored?
@@ -44,7 +45,8 @@ module.exports = class FileStream extends StreamBase {
     this.boat.addIgnoredSourceDir(options.itemConfig.location);
 
     // Private variables.
-    this.logFilename = options.itemConfig.logName.toLowerCase() + '.log';
+    this.logFilename = `${options.itemConfig.logName.toLowerCase()}.log`;
+    this.streamErrorOccured = false;
     this.stream = null;
     this.internalStream = options.internalStream;
 
@@ -67,11 +69,54 @@ module.exports = class FileStream extends StreamBase {
     fs.mkdir(this.logDir, (err) => {
 
       // Ignore dir exists error.
-      if (err && err.code !== 'EEXIST') { return finish(err); }
+      if (err && err.code !== 'EEXIST') {
 
+        // Crash app.
+        if (this.cfg.crashOnWriteError) { return finish(err); }
+
+        console.log('here');
+
+        // Otherwise notify and ignore error.
+        this.boat.sendNotifications({
+          notificationType: 'log-directory-error.file.stream',
+          message: `Trawler is unable to create the log directory (${err.code || err.name}).`,
+          trawlerErr: err,
+        });
+
+        this.boat.outputLog('trawler', {
+          message: 'Trawler is unable to create the log directory.',
+          trawlerErr: err,
+          trawlerLogType: 'error',
+        });
+
+        return finish(null);
+
+      }
+
+      // Rotate the log files if necessary.
       this.rotateLogs((err, rotated) => {
 
-        if (err) { return finish(err); }
+        if (err) {
+
+          // Crash app.
+          if (this.cfg.crashOnWriteError) { return finish(err); }
+
+          // Otherwise notify and ignore error.
+          this.boat.sendNotifications({
+            notificationType: 'rotate-error.file.stream',
+            message: `Trawler is unable to rotate the log files (${err.code || err.name}).`,
+            trawlerErr: err,
+          });
+
+          this.boat.outputLog('trawler', {
+            message: 'Trawler is unable to rotate the log files.',
+            trawlerErr: err,
+            trawlerLogType: 'error',
+          });
+
+          return finish(null);
+
+        }
 
         // Ensure we create a new stream if we haven't rotated the logs, oitherwise rotateLogs() will handle stream
         // creation.
@@ -101,6 +146,36 @@ module.exports = class FileStream extends StreamBase {
       flags: 'a',
     });
 
+    // Handle stream write errors.
+    this.stream.on('error', (err) => {
+
+      // Notify on the first write error per app start.
+      if (!this.streamErrorOccured) {
+
+        this.boat.sendNotifications({
+          notificationType: 'write-error.file.stream',
+          trawlerErr: err,
+          message: `Trawler is unable to write to the log file (${err.code || err.name}).\n_Until the app is restarted no further write errors will be reported._`,
+        });
+
+        this.streamErrorOccured = true;
+
+      }
+
+      // Log the error.
+      this.boat.outputLog('trawler', {
+        message: 'Trawler is unable to write to the log file.',
+        trawlerErr: err,
+        trawlerLogType: 'error',
+      });
+
+      // Re-open the stream.
+      this.stream.close();
+      this.stream = null;
+      this.createStream();
+
+    });
+
     // Link to the internal stream.
     this.internalStream.pipe(this.stream);
 
@@ -119,6 +194,16 @@ module.exports = class FileStream extends StreamBase {
 
     // Close the stream.
     this.stream.end();
+
+  }
+
+  /*
+   * Called the after the child app has restarted for any reason.
+   */
+  onChildAppRestart (/* reason */) {
+
+    // Reset the flag.
+    this.streamErrorOccured = false;
 
   }
 
