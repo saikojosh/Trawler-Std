@@ -74,8 +74,6 @@ module.exports = class FileStream extends StreamBase {
         // Crash app.
         if (this.cfg.crashOnError) { return finish(err); }
 
-        console.log('here');
-
         // Otherwise notify and ignore error.
         this.boat.sendNotifications({
           notificationType: 'trawler-error',
