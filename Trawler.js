@@ -401,7 +401,7 @@ module.exports = class Trawler {
 
     // Tidy up the child app.
     if (this.childApp) {
-      this.childApp.kill();
+      this.childApp.kill('SIGINT');  // Kill using the interrupt signal so we can capture it and prevent a restartOnCrash.
       this.childApp = null;
       this.childAppStartTime = null;
       this.lastSourceChange = null;
