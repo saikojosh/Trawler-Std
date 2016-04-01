@@ -377,7 +377,7 @@ module.exports = class Trawler {
 
         const msg = (!restartOnCrash ? 'Restart on crash is disabled!' : 'Max restarts reached!');
 
-        // Quit the app AND Trawler.
+        // Quit Trawler.
         that.childApp = null;
         that.outputLog('trawler', {
           message: `${msg} Quitting...`,
