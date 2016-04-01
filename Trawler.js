@@ -246,20 +246,28 @@ module.exports = class Trawler {
   /*
    * Starts the child app.
    */
-  startApp (_isManualRestart) {
+  startApp (_isManualRestart, _isSourceChange) {
 
     const isManualRestart = !Boolean(typeof _isManualRestart === 'undefined');
+    const isSourceChange = !Boolean(typeof _isSourceChange === 'undefined');
     const appName = this.config.app.name;
     const version = this.config.app.version;
     let message = `"${appName}" v${version}...`;
+    let eventStr;
 
     // Figure out which message we need to display.
     if (isManualRestart) {
       message = `Restarting app ${message}`;
+      eventStr = 'app-restart-manual';
+    } else if (isSourceChange) {
+      message = `Restarting app ${message}`;
+      eventStr = 'app-restart-source-change';
     } else if (this.numCrashRestarts) {
       message = `Restarting app (${this.numCrashRestarts + 1} starts) ${message}`;
+      eventStr = 'app-restart-crash';
     } else {
       message = `Starting app  ${message}`;
+      eventStr = 'app-start';
     }
 
     // Add starting message to log.
@@ -292,6 +300,9 @@ module.exports = class Trawler {
     this.childApp.stdout.on('data', this.processChildAppOutput.bind(this, 'app-output'));
     this.childApp.stderr.on('data', this.processChildAppOutput.bind(this, 'app-error'));
 
+    // Fire the event after we've started the app.
+    this.fireEvent(eventStr);
+
     this.log.success('Ready!');
 
   }
@@ -311,6 +322,12 @@ module.exports = class Trawler {
     const newNumCrashRestarts = this.numCrashRestarts + 1;
 
     async.waterfall([
+
+      // Ensure Trawler's components know what's going on.
+      function fireCrashEvent (next) {
+        that.fireEvent('app-crash');
+        return next(null);
+      },
 
       // Add crash alert to log.
       function logAppCrash (next) {
@@ -417,7 +434,7 @@ module.exports = class Trawler {
   /*
    * Kills and restarts the child app. This does not increment numCrashRestarts.
    */
-  restartApp () {
+  restartApp (isSourceChange) {
 
     // Kill and tidy up.
     this.childApp.kill('SIGINT');  // Kill using the interrupt signal so we can capture it and prevent a restartOnCrash.
@@ -426,7 +443,7 @@ module.exports = class Trawler {
     this.clearChildStderr();
 
     // Restart.
-    this.startApp(true);
+    this.startApp(!isSourceChange, isSourceChange);
 
   }
 
@@ -442,7 +459,7 @@ module.exports = class Trawler {
     if (this.sourceChangeTimeout) { clearTimeout(this.sourceChangeTimeout); }
     this.sourceChangeTimeout = setTimeout(() => {
       this.log.success('Source changes detected!');
-      this.restartApp();
+      this.restartApp(true);
     }, this.config.trawler.sourceChangeThreshold);
 
   }
@@ -551,7 +568,8 @@ module.exports = class Trawler {
    * Sends all the notifications.
    * callback(err);
    */
-  sendNotifications (options, callback) {
+  sendNotifications (options, _callback) {
+    const callback = _callback || function () {};
 
     // Skip if we have no notifications to send.
     if (!this.config.trawler.notifications || !this.config.trawler.notifications.length) {
@@ -652,6 +670,72 @@ module.exports = class Trawler {
    */
   clearChildStderr () {
     this.childAppStderrBuffer = [];
+  }
+
+  /*
+   * Sends an event to the various components in Trawler.
+   */
+  fireEvent (type) {
+
+    const handlers = [];
+    const components = [].concat(this.config.trawler.notifications).concat(this.config.trawler.streams);
+
+    switch (type) {
+
+      case 'app-start':
+        handlers.push({
+          fn: 'onChildAppStart',
+        });
+        break;
+
+      case 'app-restart-manual':
+        handlers.push({
+          fn: 'onChildAppRestart',
+          params: ['manual'],
+        }, {
+          fn: 'onChildAppManualRestart',
+        });
+        break;
+
+      case 'app-restart-source-change':
+        handlers.push({
+          fn: 'onChildAppRestart',
+          params: ['source-change'],
+        }, {
+          fn: 'onChildAppSourceChangeRestart',
+        });
+        break;
+
+      case 'app-restart-crash':
+        handlers.push({
+          fn: 'onChildAppRestart',
+          params: ['crash'],
+        }, {
+          fn: 'onChildAppCrashRestart',
+        });
+        break;
+
+      // Invalid event type.
+      default: return;
+
+    }
+
+    // Passes the event to each component.
+    async.each(components, (component, next) => {
+
+      // Ensure we call each of the event handlers.
+      for (let i = 0, ilen = handlers.length; i < ilen; i++) {
+        const funcName = handlers[i].fn;
+        const params = handlers[i].params || [];
+        const fn = component[funcName];
+
+        if (typeof fn === 'function') { fn.apply(component, params); }
+      }
+
+      return next(null);
+
+    });
+
   }
 
 };
