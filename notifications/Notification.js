@@ -50,6 +50,7 @@ module.exports = class NotificationBase {
 
     const options = extender.defaults({
       notificationType: null,
+      message: null,
       numCrashRestarts: null,
       childAppStderrBuffer: null,
       childAppStartTime: null,
@@ -64,12 +65,16 @@ module.exports = class NotificationBase {
     let stackTrace;
 
     // Prepare the appropriate message.
-    switch (options.notificationType) {
-      case 'app-no-restarts': message = 'The app is not allowed to crash because "restartOnCrash" is not set to true.'; break;
-      case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (max ' + options.numCrashRestarts + ' restart(s) allowed).'; stackTrace = options.childAppStderrBuffer; break;
-      case 'app-crash': message = 'The app has crashed *' + options.numCrashRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
-      case 'trawler-crash': message = 'Trawler itself has crashed!'; stackTrace = options.trawlerErr.stack; break;
-      default: message = 'Something unexpected happened, it\'s probably worth checking out the application to make sure it\s still running.'; break;
+    if (!options.message) {
+      switch (options.notificationType) {
+        case 'app-no-restarts': message = 'The app is not allowed to crash because "restartOnCrash" is not set to true.'; break;
+        case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (max ' + options.numCrashRestarts + ' restart(s) allowed).'; stackTrace = options.childAppStderrBuffer; break;
+        case 'app-crash': message = 'The app has crashed *' + options.numCrashRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
+        case 'trawler-crash': message = 'Trawler itself has crashed!'; stackTrace = options.trawlerErr.stack; break;
+        default: message = 'Something unexpected happened, it\'s probably worth checking out the application to make sure it\s still running.'; break;
+      }
+    } else {
+      message = options.message;
     }
 
     const text = [
