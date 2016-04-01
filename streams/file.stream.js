@@ -31,7 +31,7 @@ module.exports = class FileStream extends StreamBase {
       logName: 'crash',
       rotateLogs: true,
       maxBackLogs: 6,
-      crashOnWriteError: true,
+      crashOnError: true,
     }, options);
 
     // Where will the logs be stored?
@@ -72,13 +72,13 @@ module.exports = class FileStream extends StreamBase {
       if (err && err.code !== 'EEXIST') {
 
         // Crash app.
-        if (this.cfg.crashOnWriteError) { return finish(err); }
+        if (this.cfg.crashOnError) { return finish(err); }
 
         console.log('here');
 
         // Otherwise notify and ignore error.
         this.boat.sendNotifications({
-          notificationType: 'log-directory-error.file.stream',
+          notificationType: 'trawler-error',
           message: `Trawler is unable to create the log directory (${err.code || err.name}).`,
           trawlerErr: err,
         });
@@ -99,11 +99,11 @@ module.exports = class FileStream extends StreamBase {
         if (err) {
 
           // Crash app.
-          if (this.cfg.crashOnWriteError) { return finish(err); }
+          if (this.cfg.crashOnError) { return finish(err); }
 
           // Otherwise notify and ignore error.
           this.boat.sendNotifications({
-            notificationType: 'rotate-error.file.stream',
+            notificationType: 'trawler-error',
             message: `Trawler is unable to rotate the log files (${err.code || err.name}).`,
             trawlerErr: err,
           });
@@ -153,7 +153,7 @@ module.exports = class FileStream extends StreamBase {
       if (!this.streamErrorOccured) {
 
         this.boat.sendNotifications({
-          notificationType: 'write-error.file.stream',
+          notificationType: 'trawler-error',
           trawlerErr: err,
           message: `Trawler is unable to write to the log file (${err.code || err.name}).\n_Until the app is restarted no further write errors will be reported._`,
         });
