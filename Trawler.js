@@ -66,8 +66,10 @@ module.exports = class Trawler {
 
     if (envArgIndex > -1 && this.config.cliArgs[envArgIndex + 1] && !this.config.cliArgs[envArgIndex + 1].match(/^\-/)) {
       this.config.app.env = this.config.cliArgs[envArgIndex + 1];
+      this.envOverridden = true;
       this.log.important(`App environment: "${this.config.app.env}" (overridden by CLI argument).`);
     } else {
+      this.envOverridden = false;
       this.log.important(`App environment: "${this.config.app.env}".`);
     }
 
