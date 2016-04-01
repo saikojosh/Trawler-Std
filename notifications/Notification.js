@@ -65,18 +65,19 @@ module.exports = class NotificationBase {
     let stackTrace;
 
     // Prepare the appropriate message.
-    if (!options.message) {
-      switch (options.notificationType) {
-        case 'app-no-restarts': message = 'The app is not allowed to crash because "restartOnCrash" is not set to true.'; break;
-        case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (max ' + options.numCrashRestarts + ' restart(s) allowed).'; stackTrace = options.childAppStderrBuffer; break;
-        case 'app-crash': message = 'The app has crashed *' + options.numCrashRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
-        case 'trawler-crash': message = 'Trawler itself has crashed!'; stackTrace = options.trawlerErr.stack; break;
-        default: message = 'Something unexpected happened, it\'s probably worth checking out the application to make sure it\s still running.'; break;
-      }
-    } else {
-      message = options.message;
+    switch (options.notificationType) {
+      case 'app-no-restarts': message = 'The app is not allowed to crash because "restartOnCrash" is not set to true.'; break;
+      case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (`maxCrashRestarts` property limits to max. ' + options.numCrashRestarts + ' restart(s)).'; stackTrace = options.childAppStderrBuffer; break;
+      case 'app-crash': message = 'The app has crashed *' + options.numCrashRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
+      case 'trawler-crash': message = 'Trawler itself has crashed!'; stackTrace = options.trawlerErr.stack; break;
+      case 'trawler-error': message = 'Trawler has encountered an error but has not crashed.'; stackTrace = options.trawlerErr.stack; break;
+      default: message = 'Something unexpected happened, it\'s probably worth checking out the application to make sure it\s still running.'; break;
     }
 
+    // Allow us to override the message.
+    if (options.message) { message = options.message; }
+
+    // Construct the notification body text.
     const text = [
       ' ',
       `*ALERT: ${moment.utc().format('YYYY-MM-DD @ HH:mm:ss')} UTC*`,
