@@ -75,16 +75,16 @@ module.exports = class FileStream extends StreamBase {
         if (this.cfg.crashOnError) { return finish(err); }
 
         // Otherwise notify and ignore error.
-        this.boat.sendNotifications({
-          notificationType: 'trawler-error',
-          message: `Trawler is unable to create the log directory (${err.code || err.name}).`,
-          trawlerErr: err,
-        });
-
         this.boat.outputLog('trawler', {
           message: 'Trawler is unable to create the log directory.',
           trawlerErr: err,
           trawlerLogType: 'error',
+        });
+
+        this.boat.sendNotifications({
+          notificationType: 'trawler-error',
+          message: `Trawler is unable to create the log directory (${err.code || err.name}).`,
+          trawlerErr: err,
         });
 
         return finish(null);
@@ -100,17 +100,17 @@ module.exports = class FileStream extends StreamBase {
           if (this.cfg.crashOnError) { return finish(err); }
 
           // Otherwise notify and ignore error.
-          this.boat.sendNotifications({
-            notificationType: 'trawler-error',
-            message: `Trawler is unable to rotate the log files (${err.code || err.name}).`,
-            trawlerErr: err,
-          });
-
           this.boat.outputLog('trawler', {
             message: 'Trawler is unable to rotate the log files.',
             trawlerErr: err,
             trawlerLogType: 'error',
           });
+
+          this.boat.sendNotifications({
+            notificationType: 'trawler-error',
+            message: `Trawler is unable to rotate the log files (${err.code || err.name}).`,
+            trawlerErr: err,
+          })
 
           return finish(null);
 
@@ -147,6 +147,13 @@ module.exports = class FileStream extends StreamBase {
     // Handle stream write errors.
     this.stream.on('error', (err) => {
 
+      // Log the error.
+      this.boat.outputLog('trawler', {
+        message: 'Trawler is unable to write to the log file.',
+        trawlerErr: err,
+        trawlerLogType: 'error',
+      });
+
       // Notify on the first write error per app start.
       if (!this.streamErrorOccured) {
 
@@ -159,13 +166,6 @@ module.exports = class FileStream extends StreamBase {
         this.streamErrorOccured = true;
 
       }
-
-      // Log the error.
-      this.boat.outputLog('trawler', {
-        message: 'Trawler is unable to write to the log file.',
-        trawlerErr: err,
-        trawlerLogType: 'error',
-      });
 
       // Re-open the stream.
       this.stream.close();
