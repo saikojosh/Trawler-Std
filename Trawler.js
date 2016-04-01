@@ -471,8 +471,8 @@ module.exports = class Trawler {
    * Prevents the source change watcher from checking the given dir. Used by the file stream to prevent the logs dir
    * from triggering app restarts. Either a string or RegExp can be passed in.
    * [Usage]
-   *  addIgnoredSourceDir('/path/to/dir');
-   *  addIgnoredSourceDir(/\/path\/to\/dir/);
+   *  addIgnoredSourceDir('/path/to/dir');  // String.
+   *  addIgnoredSourceDir(/\/path\/to\/dir/);  // RegExp.
    */
   addIgnoredSourceDir (dir) {
 
