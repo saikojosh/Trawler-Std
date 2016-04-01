@@ -50,10 +50,10 @@ module.exports = class FileStream extends StreamBase {
     this.stream = null;
     this.internalStream = options.internalStream;
 
-    this.log.debug(`   Log dir: ${this.logDir}`);
-    this.log.debug(`   Log filename: ${this.logFilename}`);
-    this.log.debug(`   Rotate logs: ${this.cfg.rotateLogs}`);
-    this.log.debug(`   Max. back logs: ${this.cfg.maxBackLogs}`);
+    this.log.debug(`   Log Directory: ${this.logDir}`);
+    this.log.debug(`   Log Filename: ${this.logFilename}`);
+    this.log.debug(`   Rotate Logs: ${this.cfg.rotateLogs ? 'Yes' : 'No'}`);
+    this.log.debug(`   Maximum Back Logs: ${this.cfg.maxBackLogs}`);
 
   }
 

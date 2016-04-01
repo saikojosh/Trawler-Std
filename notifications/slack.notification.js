@@ -30,7 +30,7 @@ module.exports = class SlackNotification extends NotificationBase {
 
     this.log.debug(`   URL: ${this.cfg.url}`);
     this.log.debug(`   Username: ${this.cfg.username}`);
-    this.log.debug(`   Icon emoji: ${this.cfg.iconEmoji}`);
+    this.log.debug(`   Icon Emoji: ${this.cfg.iconEmoji}`);
 
   }
 

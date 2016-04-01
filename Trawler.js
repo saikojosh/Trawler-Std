@@ -117,8 +117,15 @@ module.exports = class Trawler {
    */
   init (finish) {
 
-    // Console log only.
+    // Log out some details.
     this.log.success('Initialising Trawler...');
+    this.log.debug(`   Restart on Crash: ${this.config.trawler.restartOnCrash ? 'Yes' : 'No'}`);
+    this.log.debug(`   Restart on Source Change: ${this.config.trawler.restartOnSourceChange ? 'Yes' : 'No'}`);
+    this.log.debug(`   Maximum Crash Restarts: ${this.config.trawler.maxCrashRestarts}`);
+    this.log.debug(`   Poll for Source Changes: ${this.config.trawler.pollSourceChanges ? 'Yes' : 'No'}`);
+    this.log.debug(`   Source Change Threshold: ${this.config.trawler.sourceChangeThreshold} ms`);
+    this.log.debug(`   Console stdout: ${this.config.trawler.console.stdout ? 'Yes' : 'No'}`);
+    this.log.debug(`   Console stderr: ${this.config.trawler.console.stderr ? 'Yes' : 'No'}`);
 
     // Prevent Trawler from exiting immediately after starting the child app.
     process.stdin.resume();
