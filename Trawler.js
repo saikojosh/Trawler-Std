@@ -94,14 +94,14 @@ module.exports = class Trawler {
     this.sourceChangeWatcher = null;
     this.sourceChangeIgnoredPaths = [];
 
-    // Streams.
-    this.streams = {
-      file: require('./streams/file.stream.js'),
-    };
-
     // Notification providers.
     this.notifications = {
       slack: require('./notifications/slack.notification.js'),
+    };
+
+    // Streams.
+    this.streams = {
+      file: require('./streams/file.stream.js'),
     };
 
     // Log if we have no streams specified.
@@ -123,13 +123,13 @@ module.exports = class Trawler {
     // Prevent Trawler from exiting immediately after starting the child app.
     process.stdin.resume();
 
-    // Initialise each of the streams.
-    this.initSomething('streams', (err) => {
+    // Initialise each of the notifications.
+    this.initSomething('notifications', (err) => {
 
       if (err) { return finish(err); }
 
-      // Initialise each of the notifications.
-      this.initSomething('notifications', (err) => {
+      // Initialise each of the streams.
+      this.initSomething('streams', (err) => {
 
         if (err) { return finish(err); }
 
