@@ -1,13 +1,14 @@
 # Trawler (trawler-std)
-Trawler (`npm install -g trawler-std`) is a simple utility that sits in front of your Node app and performs a number of tasks including:
-* Capturing console output (stdout) and console errors (stderr) of your app.
+Trawler (`npm install -g trawler-std`) is an application **supervisor** that sits in front of your Node app and performs a number of tasks including:
+* Capturing the console output (stdout) and console errors (stderr) of your app.
 * Streaming the output somewhere (e.g. to a file on disk).
 * Daily log file rotation using the same naming convention as [Bunyan](https://www.npmjs.com/package/bunyan).
-* Sending admin notifications on app crash (e.g. Slack or email (not implemented yet!)).
+* Sending admin notifications on app crash (e.g. Slack).
 * Automatically restarting your app after a crash.
 * Automatically restarting your app when source code changes.
-* Supports watching for source code changes on network shares and Docker volumes.
-* Trawler is production ready, and great for development too.
+* Supports watching for source code changes on network shares and Docker volumes with `pollSourceChanges: true`.
+
+Trawler is production ready, and great for development too. It's also been built with Docker containers as one of the primary use cases.
 
 ## Setup
 To use Trawler do the following:
@@ -86,12 +87,13 @@ Trawler grabs the output of your app but it needs to know what to do with it. St
 ##### File:
 Writes your app's output to a file on disk in a JSON-like format similar to [Bunyan](https://www.npmjs.com/package/bunyan). Supports daily log rotation using the same naming scheme as Bunyan.
 
-| Property    | Default | Description |
-|-------------|---------|-------------|
-| location    |         | Specify the location to store your log file(s). Paths starting with `/` are absolute paths, all other paths are relative to your app's base directory. |
-| logName     | "crash" | Specify a custom name for your log files. |
-| rotateLogs  | false   | Set `true` to enable daily log rotation based on UTC times. |
-| maxBackLogs | 6       | Specify a custom number of backlogs to keep in addition to the current day's log file. |
+| Property     | Default | Description |
+|--------------|---------|-------------|
+| location     |         | Specify the location to store your log file(s). Paths starting with `/` are absolute paths, all other paths are relative to your app's base directory. |
+| logName      | "crash" | Specify a custom name for your log files. |
+| rotateLogs   | false   | Set `true` to enable daily log rotation based on UTC times. |
+| maxBackLogs  | 6       | Specify a custom number of backlogs to keep in addition to the current day's log file. |
+| crashOnError | true    | Set `false` to prevent Trawler from crashing if the file stream encounters an error i.e. unable to create a log directory. Errors writing to the log file will not crash Trawler, however, you will receive one notification per application start if this error occurs. |
 
 #### Notifications
 
@@ -99,11 +101,11 @@ Writes your app's output to a file on disk in a JSON-like format similar to [Bun
 Sends a notification to a Slack channel when your app crashes.
 
 | Property    | Default   | Description |
-|----------==-|-----------|-------------|
+|-------------|-----------|-------------|
 | url         |           | Add your Slack webhook URL in here. |
 | username    | "Trawler" | Specify a custom username to display in Slack.  |
 | iconEmoji   | "\:anchor\:" :anchor: | Specify a custom Slack emoji to use next to the username in Slack. |
-| attention[] |           | Specify an array of Slack usernames to notify. |
+| attention[] |           | Specify an array of Slack usernames to notify. The '@' is optional. |
 
 
 ## Command Line Arguments
@@ -167,8 +169,20 @@ If you configure the `file` stream then the stdout and stderr of your applicatio
 
 However, if you want to see your application's stdout and stderr in the console you can set the `console.stdout` and `console.stderr` config properties to true in `package.json`, or use the `--stdout`, `--stderr` or `--stdall` CLI arguments.
 
+### Notification Error Codes
+When Trawler notifies you it sends a notification error code to let you know what's happening:
+
+| Error Code        | Description |
+|-------------------|-------------|
+| app-crash         | Your application has crashed and been restarted. |
+| app-no-restarts   | Your application has crashed but has not been restarted because `restartOnCrash` is `false`. |
+| app-restart-limit | Your application has crashed but has not been restarted because it has reached the restarted limit set in `maxCrashRestarts`. |
+| trawler-crash     | Trawler itself has crashed. You will need to restart Trawler to restart your app (and probably submit an issue on [GitHub](https://github.com/saikojosh/Trawler/issues)!) |
+| trawler-error     | Same as `trawler-crash` except Trawler has recovered from the problem without crashing. |
+
 ### Known Issues
 * Changing Trawler's configuration in `package.json` on the fly will not work, despite Trawler reloading your application if `restartOnSourceChange` is set.
 * It's currently not possible to ignore specific files when restarting due to source file changes.
 * It's currently not possible for a stream to handle **only** the stdout or stderr of your app. Each stream will receive a combined stream of both.
 * It's currently not possible to wait to restart your crashed app until source files have been changed (like Nodemon), instead Trawler will restart your app immediately when it crashes.
+* If an error occurs in the file stream and `crashOnError` is `true`, you'll only receive the error stack in the notification and not the explanation message.
