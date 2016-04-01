@@ -100,4 +100,39 @@ module.exports = class NotificationBase {
 
   }
 
+  /*
+   * Called the first time the child app starts.
+   */
+  onChildAppStart () {
+
+  }
+
+  /*
+   * Called after the child app has restarted for any reason.
+   */
+  onChildAppRestart (/* reason */) {
+
+  }
+
+  /*
+   * Called after the child app has been restarted manually.
+   */
+  onChildAppManualRestart () {
+
+  }
+
+  /*
+   * Called after the child app has restarted because a source code change.
+   */
+  onChildAppSourceChangeRestart () {
+
+  }
+
+  /*
+   * Called after the child app has restarted because of a crash.
+   */
+  onChildAppCrashRestart () {
+
+  }
+
 };
