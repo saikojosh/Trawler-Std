@@ -180,6 +180,9 @@ module.exports = class Trawler {
   /*
    * Initialises either streams or notifications depending on what's given in the
    * 'what' parameter.
+
+  /*
+   * Initialises either streams or notifications depending on what's given in the 'what' parameter.
    * finish(err);
    */
   initSomething (what, finish) {
