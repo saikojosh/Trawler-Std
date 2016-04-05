@@ -153,7 +153,7 @@ module.exports = class Trawler {
           this.sourceChangeWatcher = chokidar.watch('.', {
             ignored: this.checkSourceChangeIgnoredFiles.bind(this),
             usePolling: this.config.trawler.pollSourceChanges,
-            ignoreInitial: true,  //  Allow Chokidar's 'ready' event to fire as soon as possible.
+            ignoreInitial: !this.debugWatchEvents,  //  Allow Chokidar's 'ready' event to fire as soon as possible if we don't need the initial 'add' events.
           })
           .on('ready', () => {
             this.sourceChangeReady = true;
@@ -465,11 +465,11 @@ module.exports = class Trawler {
    */
   onSourceChange (event, path) {
 
-    // Skip if no child app is running.
-    if (!this.childApp || !this.sourceChangeReady) { return; }
-
     // Log out the filesystem event?
     if (this.debugWatchEvents) { this.log.debug(`File Event: [${event}] ${path}`); }
+
+    // Skip if no child app is running.
+    if (!this.childApp || !this.sourceChangeReady) { return; }
 
     // Restart after a delay.
     if (this.sourceChangeTimeout) { clearTimeout(this.sourceChangeTimeout); }
