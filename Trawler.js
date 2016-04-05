@@ -81,6 +81,9 @@ module.exports = class Trawler {
       this.config.trawler.console.stderr = true;
     }
 
+    // Are we outputting the filesystem watch events.
+    this.debugWatchEvents = Boolean(this.config.cliArgs.indexOf('--debug-watch-events') > -1);
+
     // Private variables.
     this.hostname = os.hostname();
     this.numCrashRestarts = 0;
@@ -464,6 +467,9 @@ module.exports = class Trawler {
 
     // Skip if no child app is running.
     if (!this.childApp || !this.sourceChangeReady) { return; }
+
+    // Log out the filesystem event?
+    if (this.debugWatchEvents) { this.log.debug(`File Event: [${event}] ${path}`); }
 
     // Restart after a delay.
     if (this.sourceChangeTimeout) { clearTimeout(this.sourceChangeTimeout); }
