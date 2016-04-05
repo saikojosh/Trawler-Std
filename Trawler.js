@@ -489,7 +489,7 @@ module.exports = class Trawler {
     if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
 
     // Ignore certain directories by default.
-    if (checkPath.match(/\/(?:node_modules|bower_components)/)) { return true; }
+    if (checkPath.match(/\/?(?:node_modules|bower_components)/)) { return true; }
 
     // Check against each of the ignored files.
     for (let i = 0, ilen = this.sourceChangeIgnoredPaths.length; i < ilen; i++) {
