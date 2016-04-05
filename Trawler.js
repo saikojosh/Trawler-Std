@@ -476,8 +476,11 @@ module.exports = class Trawler {
    */
   checkSourceChangeIgnoredFiles (checkPath, stats) {  // WARNING: must provide both arguments here for the method to get called.
 
-    // Ignore .dot files.
+    // Ignore all .dot files
     if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
+
+    // Ignore certain directories by default.
+    if (checkPath.match(/\/(?:node_modules|bower_components)/)) { return true; }
 
     // Check against each of the ignored files.
     for (let i = 0, ilen = this.sourceChangeIgnoredPaths.length; i < ilen; i++) {
