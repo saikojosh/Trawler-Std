@@ -21,6 +21,8 @@ module.exports = class Trawler {
    */
   constructor (inputConfig) {
 
+    this.firstBootStartTime = moment.utc();
+
     // Default config.
     this.config = extender.defaults({
       app: {
@@ -154,24 +156,13 @@ module.exports = class Trawler {
             ignoreInitial: true,  //  Allow Chokidar's 'ready' event to fire as soon as possible.
           })
           .on('ready', () => {
-
             this.sourceChangeReady = true;
-
-            // Boot the child app.
-            this.log.debug('Trawler initialised.');
-            this.startApp();
-            return finish(null);
-
+            this.finishInit(finish);
           })
           .on('all', this.onSourceChange.bind(this));
 
         } else {
-
-          // Boot the child app.
-          this.log.debug('Trawler initialised.');
-          this.startApp();
-          return finish(null);
-
+          this.finishInit(finish);
         }
 
       });
@@ -181,8 +172,17 @@ module.exports = class Trawler {
   }
 
   /*
-   * Initialises either streams or notifications depending on what's given in the
-   * 'what' parameter.
+   * Finish off the initialisation process.
+   */
+  finishInit (finish) {
+
+    // Boot the child app.
+    this.log.debug(`Trawler initialised (took ${moment.utc().diff(this.firstBootStartTime)} ms).`);
+    this.startApp();
+
+    return finish(null);
+
+  }
 
   /*
    * Initialises either streams or notifications depending on what's given in the 'what' parameter.
