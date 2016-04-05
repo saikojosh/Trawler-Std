@@ -169,6 +169,13 @@ If you configure the `file` stream then the stdout and stderr of your applicatio
 
 However, if you want to see your application's stdout and stderr in the console you can set the `console.stdout` and `console.stderr` config properties to true in `package.json`, or use the `--stdout`, `--stderr` or `--stdall` CLI arguments.
 
+### Watching For Source Changes
+When watching for source file changes Trawler will watch all files and directories by default, except for the following:
+
+* All file and directory names that begin with a dot e.g. `.gitignore`, `.sass-cache/` etc.
+* The `node_modules` directory.
+* The `bower_components` directory.
+
 ### Notification Error Codes
 When Trawler notifies you it sends a notification error code to let you know what's happening:
 
@@ -186,3 +193,4 @@ When Trawler notifies you it sends a notification error code to let you know wha
 * It's currently not possible for a stream to handle **only** the stdout or stderr of your app. Each stream will receive a combined stream of both.
 * It's currently not possible to wait to restart your crashed app until source files have been changed (like Nodemon), instead Trawler will restart your app immediately when it crashes.
 * If an error occurs in the file stream and `crashOnError` is `true`, you'll only receive the error stack in the notification and not the explanation message.
+* It's currently not possible to specify specific paths to ignore or watch when watching for source changes.
