@@ -454,7 +454,7 @@ module.exports = class Trawler {
   }
 
   /*
-   * Kills and restarts the child app. This does not increment numCrashRestarts.
+   * Kills and restarts the child app. This resets numCrashRestarts.
    */
   restartApp (isSourceChange) {
 
@@ -462,6 +462,7 @@ module.exports = class Trawler {
     this.childApp.kill('SIGINT');  // Kill using the interrupt signal so we can capture it and prevent a restartOnCrash.
     this.childApp = null;
     this.lastSourceChange = null;
+    this.numCrashRestarts = 0;
     this.clearChildStderr();
 
     // Restart.
