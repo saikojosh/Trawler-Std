@@ -186,6 +186,7 @@ module.exports = class Trawler {
     if (this.config.trawler.notifyOnFirstBoot) {
       this.sendNotifications({
         notificationType: 'app-first-boot',
+        childAppStartTime: this.childAppStartTime,
       });
     }
 
