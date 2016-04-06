@@ -94,7 +94,7 @@ module.exports = class NotificationBase {
       ' ',
       '*Status:*',
       'Boot Time: ' + (startTime ? '`' + startTime.format('YYYY-MM-DD') + '` `' + startTime.format('HH:mm:ss.SSS') + ' UTC`' : '`Not running`'),
-      'Uptime:  ' + (startTime ? '`' + options.childAppStartTime.fromNow(true) + '` or `' + moment.utc().diff(options.childAppStartTime) + ' ms`' : '`Not running`'),
+      'Uptime:  ' + (startTime ? '`' + startTime.fromNow(true) + '` or `' + moment.utc().diff(startTime) + ' ms`' : '`Not running`'),
       'Restarts: `' + (options.numCrashRestarts || 0) + '` restart(s) due to crashes.',
       'Code: `' + options.notificationType + '`',
       ' ',
