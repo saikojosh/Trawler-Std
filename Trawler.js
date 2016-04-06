@@ -288,7 +288,7 @@ module.exports = class Trawler {
       message = `Restarting app (${this.numCrashRestarts + 1} starts) ${message}`;
       eventStr = 'app-restart-crash';
     } else {
-      message = `Starting app  ${message}`;
+      message = `Starting app ${message}`;
       eventStr = 'app-start';
     }
 
@@ -325,7 +325,7 @@ module.exports = class Trawler {
     // Fire the event after we've started the app.
     this.fireEvent(eventStr);
 
-    this.log.success('Ready!');
+    this.log.success(`Ready! (${appName} v{$version})`);
 
   }
 
@@ -484,6 +484,7 @@ module.exports = class Trawler {
     // Restart after a delay.
     if (this.sourceChangeTimeout) { clearTimeout(this.sourceChangeTimeout); }
     this.sourceChangeTimeout = setTimeout(() => {
+      this.log.message(' ');  // Blank line.
       this.log.success('Source changes detected!');
       this.restartApp(true);
     }, this.config.trawler.sourceChangeThreshold);
