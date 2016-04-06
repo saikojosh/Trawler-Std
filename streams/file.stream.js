@@ -258,22 +258,36 @@ module.exports = class FileStream extends StreamBase {
 
       },
 
-      function killOldestLog (rotateRequired, logFiles, maxLogNum, maxLogFilename, next) {
+      function killOlderLogs (rotateRequired, logFiles, maxLogNum, maxLogFilename, next) {
 
         if (!rotateRequired) { return next(null, rotateRequired, null); }
 
+        const maxBackLogs = that.cfg.maxBackLogs;
+        const trimmedLogFiles = [];
+
         // Skip if we still have at least one backlog slot remaining.
-        if (typeof maxLogNum !== 'number' || maxLogNum < that.cfg.maxBackLogs - 1) {
+        if (typeof maxLogNum !== 'number' || maxLogNum < maxBackLogs - 1) {
           return next(null, rotateRequired, logFiles);
         }
 
-        // Remove the first (oldest) log file from the array.
-        logFiles.shift();
+        // Remove any older log files that will take us over the maximum number when we rotate.
+        async.eachSeries(logFiles, (logFile, nextItem) => {
 
-        // Kill the oldest one.
-        fs.unlink(pathify(logDir, maxLogFilename), (err) => {
+          // Keep the log file if it's less than the maximum number (and one free slot).
+          if (parseInt(logFile.match[1], 10) < maxBackLogs - 1) {
+            trimmedLogFiles.push(logFile);
+            return nextItem(null);
+          }
+
+          // Otherwise remove it.
+          fs.unlink(pathify(logDir, logFile.match[0]), (err) => {
+            if (err) { return nextItem(err); }
+            return nextItem(null);
+          });
+
+        }, (err) => {
           if (err) { return next(err); }
-          return next(null, rotateRequired, logFiles);
+          return next(null, rotateRequired, trimmedLogFiles);
         });
 
       },
