@@ -326,7 +326,7 @@ module.exports = class Trawler {
     // Fire the event after we've started the app.
     this.fireEvent(eventStr);
 
-    this.log.success(`Ready! (${appName} v{$version})`);
+    this.log.success(`Ready! (${appName} v${version})`);
 
   }
 
