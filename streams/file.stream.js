@@ -110,7 +110,7 @@ module.exports = class FileStream extends StreamBase {
             notificationType: 'trawler-error',
             message: `Trawler is unable to rotate the log files (${err.code || err.name}).`,
             trawlerErr: err,
-          })
+          });
 
           return finish(null);
 
@@ -248,9 +248,7 @@ module.exports = class FileStream extends StreamBase {
 
       function readLogDir (rotateRequired, next) {
 
-        if (!rotateRequired) {
-          return next(null, rotateRequired, null, null, null);
-        }
+        if (!rotateRequired) { return next(null, rotateRequired, null, null, null); }
 
         // Read in the directory so we can check the existing logs.
         that.listLogFiles(logDir, logFileRegExp, (err, logFiles, maxLogNum, maxLogFilename) => {
@@ -284,11 +282,11 @@ module.exports = class FileStream extends StreamBase {
 
         if (!rotateRequired) { return next(null, rotateRequired); }
 
-        async.each(logFiles, (item, nextItem) => {
+        async.eachSeries(logFiles, (logFile, nextItem) => {
 
-          const logNum = (item.match[1] ? parseInt(item.match[1], 10) + 1 : 0);
-          const oldFilename = pathify(logDir, item.filename);
-          const newFilename = pathify(logDir, logFilename + '.' + logNum);
+          const logNum = (logFile.match[1] ? parseInt(logFile.match[1], 10) + 1 : 0);
+          const oldFilename = pathify(logDir, logFile.filename);
+          const newFilename = pathify(logDir, `${logFilename}.${logNum}`);
 
           // Do the rename.
           fs.rename(oldFilename, newFilename, (err) => {
@@ -462,8 +460,6 @@ module.exports = class FileStream extends StreamBase {
         });
 
         // Reset regular expression.
-        logFileRegExp.exec('');
-
         const match = logFiles[0].filename.match(logFileRegExp);
 
         // Get the max log info from the oldest log file.
