@@ -37,6 +37,7 @@ module.exports = class Trawler {
         maxCrashRestarts: 0,
         pollSourceChanges: false,
         sourceChangeThreshold: 500,
+        notifyOnFirstBoot: false,
         console: {
           stdout: false,
           stderr: false,
@@ -129,6 +130,7 @@ module.exports = class Trawler {
     this.log.debug(`   Maximum Crash Restarts: ${this.config.trawler.maxCrashRestarts === 0 ? 'Unlimited' : this.config.trawler.maxCrashRestarts}`);
     this.log.debug(`   Poll for Source Changes: ${this.config.trawler.pollSourceChanges ? 'Yes' : 'No'}`);
     this.log.debug(`   Source Change Threshold: ${this.config.trawler.sourceChangeThreshold} ms`);
+    this.log.debug(`   Notify on First Boot: ${this.config.trawler.notifyOnFirstBoot ? 'Yes' : 'No'}`)
     this.log.debug(`   Console stdout: ${this.config.trawler.console.stdout ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stderr: ${this.config.trawler.console.stderr ? 'Yes' : 'No'}`);
 
@@ -179,6 +181,13 @@ module.exports = class Trawler {
     // Boot the child app.
     this.log.debug(`Trawler initialised (took ${moment.utc().diff(this.firstBootStartTime)} ms).`);
     this.startApp();
+
+    // Do we need to notify of the first boot up of the app?
+    if (this.config.trawler.notifyOnFirstBoot) {
+      this.sendNotifications({
+        notificationType: 'app-first-boot',
+      });
+    }
 
     return finish(null);
 

@@ -66,6 +66,7 @@ module.exports = class NotificationBase {
 
     // Prepare the appropriate message.
     switch (options.notificationType) {
+      case 'app-first-boot': message = 'The app has successfully booted!'; break;
       case 'app-no-restarts': message = 'The app is not allowed to crash because "restartOnCrash" is not set to true.'; break;
       case 'app-restart-limit': message = 'The app has crashed too many times and cannot be restarted again (`maxCrashRestarts` property limits to max. ' + options.numCrashRestarts + ' restart(s)).'; stackTrace = options.childAppStderrBuffer; break;
       case 'app-crash': message = 'The app has crashed *' + options.numCrashRestarts + ' time(s)*!'; stackTrace = options.childAppStderrBuffer; break;
