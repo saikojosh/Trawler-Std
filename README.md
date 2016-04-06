@@ -68,6 +68,7 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 | maxCrashRestarts      | 0       | The maximum number of times to restart your app when it crashes if `restartOnCrash` is `true`. 0 = unlimited restarts.
 | pollSourceChanges     | false   | Set `true` to manually check for file changes rather than relying on OS events. Drastically increases CPU usage but required for network shares and Docker volumes. |
 | sourceChangeThreshold | 500     | Time in milliseconds to wait for other file changes before reloading your app if `restartOnSourceChange` is `true`. Setting to a smaller number will result in (slightly) faster reloads but may lead to reloading multiple times if you change multiple files at once. |
+| notifyOnFirstBoot     | false   | Set `true` to send a notification the first time the app boots up. Useful for knowing when an app has successfully deployed and started. |
 | console.stdout        | false   | Set `true` to output your app's standard console output in the terminal. |
 | console.stderr        | false   | Set `true` to output your app's error console output in the terminal. |
 | streams[]             |         | Specify one or more streams (see below). |
@@ -177,11 +178,14 @@ When watching for source file changes Trawler will watch all files and directori
 * The `node_modules` directory.
 * The `bower_components` directory.
 
-### Notification Error Codes
-When Trawler notifies you it sends a notification error code to let you know what's happening:
+You can show which file changes are being detected by using the `--watch-file-events` CLI argument.
+
+### Notification Status Codes
+When Trawler notifies you it sends a status code to let you know what's happening:
 
 | Error Code        | Description |
 |-------------------|-------------|
+| app-first-boot    | Your application has booted successfully for the first time. |
 | app-crash         | Your application has crashed and been restarted. |
 | app-no-restarts   | Your application has crashed but has not been restarted because `restartOnCrash` is `false`. |
 | app-restart-limit | Your application has crashed but has not been restarted because it has reached the restarted limit set in `maxCrashRestarts`. |
@@ -190,7 +194,6 @@ When Trawler notifies you it sends a notification error code to let you know wha
 
 ### Known Issues
 * Changing Trawler's configuration in `package.json` on the fly will not work, despite Trawler reloading your application if `restartOnSourceChange` is set.
-* It's currently not possible to ignore specific files when restarting due to source file changes.
 * It's currently not possible for a stream to handle **only** the stdout or stderr of your app. Each stream will receive a combined stream of both.
 * It's currently not possible to wait to restart your crashed app until source files have been changed (like Nodemon), instead Trawler will restart your app immediately when it crashes.
 * If an error occurs in the file stream and `crashOnError` is `true`, you'll only receive the error stack in the notification and not the explanation message.
