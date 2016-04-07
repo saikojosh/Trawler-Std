@@ -181,6 +181,8 @@ module.exports = class Trawler {
             ignored: this.checkSourceChangeIgnoredFiles.bind(this),
             usePolling: this.config.trawler.sourceChange.usePolling,
             ignoreInitial: !this.debugWatchEvents,  //  Allow Chokidar's 'ready' event to fire as soon as possible if we don't need the initial 'add' events.
+            interval: this.config.trawler.sourceChanges.pollingIntervalDefault,
+            binaryInterval: this.config.trawler.sourceChanges.pollingIntervalBinary,
           })
           .on('ready', () => {
             this.sourceChangeReady = true;
