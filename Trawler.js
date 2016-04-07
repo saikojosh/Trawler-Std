@@ -96,6 +96,9 @@ module.exports = class Trawler {
     // Are we outputting the filesystem watch events.
     this.debugWatchEvents = Boolean(this.config.cliArgs.indexOf('--debug-watch-events') > -1);
 
+    // Force the source to be watched if we are waiting for source changes before restarting on crash.
+    if (this.config.trawler.crash.waitSourceChange) { this.config.trawler.sourceChange.autoRestart = true; }
+
     // Private variables.
     this.hostname = os.hostname();
     this.numCrashRestarts = 0;
@@ -370,6 +373,7 @@ module.exports = class Trawler {
     const restartOnCrash = this.config.trawler.crash.autoRestart;
     const maxCrashRestarts = this.config.trawler.crash.maxRestarts;
     const newNumCrashRestarts = this.numCrashRestarts + 1;
+    const waitSourceChange = this.config.trawler.crash.waitSourceChange;
 
     async.waterfall([
 
@@ -395,6 +399,10 @@ module.exports = class Trawler {
       // Stop if restart is not allowed.
       function checkMaxCrashRestarts (next) {
 
+        // Force unlimited crash restarts if we are waiting for source file changes each time.
+        if (waitSourceChange) { return next(null, false, 'wait-source-change'); }
+
+        // Check if we are allow to restart again.
         const tooManyRestarts = (maxCrashRestarts > 0 && newNumCrashRestarts >= maxCrashRestarts);
         const restartAction = (restartOnCrash && !tooManyRestarts ? 'restart' : 'quit');
 
@@ -438,6 +446,12 @@ module.exports = class Trawler {
         // Do the restart.
         that.numCrashRestarts = newNumCrashRestarts;
         return that.startApp();
+
+      // Restart after a source change has been made (like Nodemon).
+      } else if (restartAction === 'wait-source-change') {
+
+        this.log.important('Waiting for source file changes before restarting...');
+        return;
 
       // Can't restart so we quit.
       } else if (restartAction === 'quit') {
