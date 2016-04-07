@@ -32,11 +32,20 @@ module.exports = class Trawler {
         env: 'development',
       },
       trawler: {
-        restartOnCrash: null,
-        restartOnSourceChange: null,
-        maxCrashRestarts: 0,
-        pollSourceChanges: false,
-        sourceChangeThreshold: 500,
+        crash: {
+          autoRestart: false,
+          maxRestarts: 0,
+          waitSourceChange: false,
+        },
+        sourceChange: {
+          autoRestart: false,
+          threshold: 500,
+          usePolling: false,
+          pollingIntervalDefault: 100,
+          pollingIntervalBinary: 300,
+          ignores: [],
+          watches: [],
+        },
         notifyOnFirstBoot: false,
         console: {
           stdout: false,
@@ -123,14 +132,30 @@ module.exports = class Trawler {
    */
   init (finish) {
 
+    const restartOnCrash = this.config.trawler.crash.autoRestart;
+    const restartOnSourceChange = this.config.trawler.sourceChange.autoRestart;
+    const maxCrashRestarts = this.config.trawler.crash.maxRestarts;
+    const waitSourceChange = this.config.trawler.crash.waitSourceChange;
+    const pollSourceChanges = this.config.trawler.sourceChange.usePolling;
+    const sourceChangeThreshold = this.config.trawler.sourceChange.threshold;
+    const pollingIntervalDefault = this.config.trawler.sourceChange.pollingIntervalDefault;
+    const pollingIntervalBinary = this.config.trawler.sourceChange.pollingIntervalBinary;
+    const sourceChangeIgnores = this.config.trawler.sourceChange.ignores;
+    const sourceChangeWatches = this.config.trawler.sourceChange.watches;
+
     // Log out some details.
     this.log.success('Initialising Trawler...');
-    this.log.debug(`   Restart on Crash: ${this.config.trawler.restartOnCrash ? 'Yes' : 'No'}`);
-    this.log.debug(`   Restart on Source Change: ${this.config.trawler.restartOnSourceChange ? 'Yes' : 'No'}`);
-    this.log.debug(`   Maximum Crash Restarts: ${this.config.trawler.maxCrashRestarts === 0 ? 'Unlimited' : this.config.trawler.maxCrashRestarts}`);
-    this.log.debug(`   Poll for Source Changes: ${this.config.trawler.pollSourceChanges ? 'Yes' : 'No'}`);
-    this.log.debug(`   Source Change Threshold: ${this.config.trawler.sourceChangeThreshold} ms`);
-    this.log.debug(`   Notify on First Boot: ${this.config.trawler.notifyOnFirstBoot ? 'Yes' : 'No'}`)
+    this.log.debug(`   Restart on Crash: ${restartOnCrash ? 'Yes' : 'No'}`);
+    this.log.debug(`   Restart on Source Change: ${restartOnSourceChange ? 'Yes' : 'No'}`);
+    this.log.debug(`   Maximum Crash Restarts: ${maxCrashRestarts === 0 ? 'Unlimited' : maxCrashRestarts}`);
+    this.log.debug(`   Wait Source Change on Crash: ${waitSourceChange ? 'Yes' : 'No'}`);
+    this.log.debug(`   Poll for Source Changes: ${pollSourceChanges ? 'Yes' : 'No'}`);
+    this.log.debug(`   Source Change Threshold: ${sourceChangeThreshold} ms`);
+    this.log.debug(`   Polling Interval Default: ${pollingIntervalDefault} ms`);
+    this.log.debug(`   Polling Interval Binary: ${pollingIntervalBinary} ms`);
+    this.log.debug(`   Source Change Ignores: ${sourceChangeIgnores.length}`);
+    this.log.debug(`   Source Change Watches: ${sourceChangeWatches.length}`);
+    this.log.debug(`   Notify on First Boot: ${this.config.trawler.notifyOnFirstBoot ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stdout: ${this.config.trawler.console.stdout ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stderr: ${this.config.trawler.console.stderr ? 'Yes' : 'No'}`);
 
@@ -148,13 +173,13 @@ module.exports = class Trawler {
         if (err) { return finish(err); }
 
         // Start watching for source file changes?
-        if (this.config.trawler.restartOnSourceChange) {
+        if (this.config.trawler.sourceChange.autoRestart) {
 
           this.log.debug('Preparing to watch for source file changes...');
 
           this.sourceChangeWatcher = chokidar.watch('.', {
             ignored: this.checkSourceChangeIgnoredFiles.bind(this),
-            usePolling: this.config.trawler.pollSourceChanges,
+            usePolling: this.config.trawler.sourceChange.usePolling,
             ignoreInitial: !this.debugWatchEvents,  //  Allow Chokidar's 'ready' event to fire as soon as possible if we don't need the initial 'add' events.
           })
           .on('ready', () => {
@@ -340,8 +365,8 @@ module.exports = class Trawler {
 
     const that = this;
     const appName = this.config.app.name;
-    const restartOnCrash = this.config.trawler.restartOnCrash;
-    const maxCrashRestarts = this.config.trawler.maxCrashRestarts;
+    const restartOnCrash = this.config.trawler.crash.autoRestart;
+    const maxCrashRestarts = this.config.trawler.crash.maxRestarts;
     const newNumCrashRestarts = this.numCrashRestarts + 1;
 
     async.waterfall([
@@ -488,7 +513,7 @@ module.exports = class Trawler {
       this.log.message(' ');  // Blank line.
       this.log.success('Source changes detected!');
       this.restartApp(true);
-    }, this.config.trawler.sourceChangeThreshold);
+    }, this.config.trawler.sourceChange.threshold);
 
   }
 
@@ -525,7 +550,7 @@ module.exports = class Trawler {
   addIgnoredSourceDir (dir) {
 
     // Skip if we aren't watching files for changes.
-    if (!this.config.trawler.restartOnSourceChange) { return; }
+    if (!this.config.trawler.sourceChange.autoRestart) { return; }
 
     // Add the dir to ignore.
     if (this.sourceChangeIgnoredPaths.indexOf(dir) === -1) { this.sourceChangeIgnoredPaths.push(dir); }
