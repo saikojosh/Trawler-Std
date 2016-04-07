@@ -39,6 +39,8 @@ module.exports = class Trawler {
         },
         sourceChange: {
           autoRestart: false,
+          environments: [],
+          excludeEnvironments: [],
           threshold: 500,
           usePolling: false,
           pollingIntervalDefault: 100,
@@ -112,6 +114,29 @@ module.exports = class Trawler {
     this.sourceChangeWatcher = null;
     this.sourceChangeIgnoredPaths = this.prepareConfiguredPaths(this.config.trawler.sourceChange.ignored);
     this.sourceChangeWatchedPaths = this.prepareConfiguredPaths(this.config.trawler.sourceChange.watched);
+    this.sourceChangeDisabledByEnvs = false;
+
+    // Do any of the environment properties disable the source change restart config?
+    if (this.config.trawler.sourceChange.autoRestart) {
+
+      const envList = this.config.trawler.sourceChange.environments;
+      const exludeEnvList = this.config.trawler.sourceChange.excludeEnvironments;
+
+      // Positive environment check: the current environment must be in the source change's "environments" property
+      // OR no "environments" property specified.
+      if (envList && envList.length && envList.indexOf(this.config.app.env) === -1) {
+        this.sourceChangeDisabledByEnvs = 'environments';
+        this.config.trawler.sourceChange.autoRestart = false;
+      }
+
+      // Negative environment check: the current environment must not be in the source change's "excludeEnvironments"
+      // property OR no "excludeEnvironments" property specified.
+      if (exludeEnvList && exludeEnvList.length && exludeEnvList.indexOf(this.config.app.env) > -1) {
+        this.sourceChangeDisabledByEnvs = 'excludeEnvironments';
+        this.config.trawler.sourceChange.autoRestart = false;
+      }
+
+    }
 
     // Notification providers.
     this.notifications = {
@@ -138,6 +163,7 @@ module.exports = class Trawler {
 
     const restartOnCrash = this.config.trawler.crash.autoRestart;
     const restartOnSourceChange = this.config.trawler.sourceChange.autoRestart;
+    const restartOnSourceChangeStr = (this.sourceChangeDisabledByEnvs ? `Disabled by "${this.sourceChangeDisabledByEnvs}" property.` : (restartOnSourceChange ? 'Yes' : 'No'));
     const maxCrashRestarts = this.config.trawler.crash.maxRestarts;
     const waitSourceChange = this.config.trawler.crash.waitSourceChange;
     const pollSourceChanges = this.config.trawler.sourceChange.usePolling;
@@ -150,7 +176,7 @@ module.exports = class Trawler {
     // Log out some details.
     this.log.success('Initialising Trawler...');
     this.log.debug(`   Restart on Crash: ${restartOnCrash ? 'Yes' : 'No'}`);
-    this.log.debug(`   Restart on Source Change: ${restartOnSourceChange ? 'Yes' : 'No'}`);
+    this.log.debug(`   Restart on Source Change: ${restartOnSourceChangeStr}`);
     this.log.debug(`   Maximum Crash Restarts: ${maxCrashRestarts === 0 ? 'Unlimited' : maxCrashRestarts}`);
     this.log.debug(`   Wait Source Change on Crash: ${waitSourceChange ? 'Yes' : 'No'}`);
     this.log.debug(`   Poll for Source Changes: ${pollSourceChanges ? 'Yes' : 'No'}`);
