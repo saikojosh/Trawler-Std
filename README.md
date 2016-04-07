@@ -32,6 +32,7 @@ To use Trawler do the following:
     },
     "sourceChange": {
       "autoRestart": true,  // Optional, default = false.
+      "environments": ["development"],  // Optional.
       "usePolling": true,  // Optional, default = false.
       "ignored": ["regexp:Dockerfile", "regexp:i:.*\\.md$"],  // Optional.
       "watched": ["my_directory"]  // Optional.
@@ -76,6 +77,8 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 | crash.maxRestarts                   | 0       | The maximum number of times to restart your app when it crashes if `restartOnCrash` is `true`. 0 = unlimited restarts. |
 | crash.waitSourceChange              | false   | Set `true` to prevent a crashed app from restarting until the source code has changed. Forces `sourceChange.autoRestart` to be `true`. |
 | sourceChange.autoRestart            | false   | Set `true` to automatically restart your app when the source files change. |
+| sourceChange.environments[]         |         | To **limit** source change watching to run **only** in specific environments, specify an array of environment strings. By default it will run in all environments. |
+| sourceChange.excludeEnvironments[]  |         | To **prevent** source change watching from running in specific environments, specify an array of environments strings. |
 | sourceChange.threshold              | 500     | Time in milliseconds to wait for other file changes before reloading your app if `restartOnSourceChange` is `true`. Setting to a smaller number will result in (slightly) faster reloads but may lead to reloading multiple times if you change multiple files at once. |
 | sourceChange.usePolling             | false   | Set `true` to manually check for file changes rather than relying on OS events. Required for network shares and Docker volumes. |
 | sourceChange.pollingIntervalDefault | 100     | When `usePolling` is `true` you can increase this value to reduce CPU usage when polling files (not including binary files). |
