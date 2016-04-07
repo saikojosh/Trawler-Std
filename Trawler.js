@@ -400,12 +400,21 @@ module.exports = class Trawler {
       // Stop if restart is not allowed.
       function checkMaxCrashRestarts (next) {
 
-        // Force unlimited crash restarts if we are waiting for source file changes each time.
-        if (waitSourceChange) { return next(null, false, 'wait-source-change'); }
+        // Restart not enabled.
+        if (!restartOnCrash) { return next(null, false, 'quit'); }
 
-        // Check if we are allow to restart again.
-        const tooManyRestarts = (maxCrashRestarts > 0 && newNumCrashRestarts >= maxCrashRestarts);
-        const restartAction = (restartOnCrash && !tooManyRestarts ? 'restart' : 'quit');
+        // Check if we are allowed to restart again.
+        const tooManyRestarts = Boolean(maxCrashRestarts > 0 && newNumCrashRestarts >= maxCrashRestarts);
+        let restartAction;
+
+        // What's our restart action?
+        if (waitSourceChange) {
+          restartAction = 'wait-source-change';
+        } else if (tooManyRestarts) {
+          restartAction = 'quit';
+        } else {
+          restartAction = 'restart';
+        }
 
         return next(null, tooManyRestarts, restartAction);
 
