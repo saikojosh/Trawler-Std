@@ -42,7 +42,7 @@ module.exports = class FileStream extends StreamBase {
     }
 
     // Ignore the logs directory for file changes.
-    this.boat.addIgnoredSourceDir(options.itemConfig.location);
+    this.boat.addIgnoredSourcePath(options.itemConfig.location);
 
     // Private variables.
     this.logFilename = `${options.itemConfig.logName.toLowerCase()}.log`;

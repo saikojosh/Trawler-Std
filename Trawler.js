@@ -43,8 +43,8 @@ module.exports = class Trawler {
           usePolling: false,
           pollingIntervalDefault: 100,
           pollingIntervalBinary: 300,
-          ignores: [],
-          watches: [],
+          ignored: [],
+          watched: [],
         },
         notifyOnFirstBoot: false,
         console: {
@@ -110,7 +110,8 @@ module.exports = class Trawler {
     this.sourceChangeReady = false;
     this.sourceChangeTimeout = null;
     this.sourceChangeWatcher = null;
-    this.sourceChangeIgnoredPaths = [];
+    this.sourceChangeIgnoredPaths = this.prepareConfiguredPaths(this.config.trawler.sourceChange.ignored);
+    this.sourceChangeWatchedPaths = this.prepareConfiguredPaths(this.config.trawler.sourceChange.watched);
 
     // Notification providers.
     this.notifications = {
@@ -143,8 +144,8 @@ module.exports = class Trawler {
     const sourceChangeThreshold = this.config.trawler.sourceChange.threshold;
     const pollingIntervalDefault = this.config.trawler.sourceChange.pollingIntervalDefault;
     const pollingIntervalBinary = this.config.trawler.sourceChange.pollingIntervalBinary;
-    const sourceChangeIgnores = this.config.trawler.sourceChange.ignores;
-    const sourceChangeWatches = this.config.trawler.sourceChange.watches;
+    const sourceChangeIgnored = this.config.trawler.sourceChange.ignored;
+    const sourceChangeWatched = this.config.trawler.sourceChange.watched;
 
     // Log out some details.
     this.log.success('Initialising Trawler...');
@@ -156,8 +157,8 @@ module.exports = class Trawler {
     this.log.debug(`   Source Change Threshold: ${sourceChangeThreshold} ms`);
     this.log.debug(`   Polling Interval Default: ${pollingIntervalDefault} ms`);
     this.log.debug(`   Polling Interval Binary: ${pollingIntervalBinary} ms`);
-    this.log.debug(`   Source Change Ignores: ${sourceChangeIgnores.length}`);
-    this.log.debug(`   Source Change Watches: ${sourceChangeWatches.length}`);
+    this.log.debug(`   Source Change Ignored: ${sourceChangeIgnored.length}`);
+    this.log.debug(`   Source Change Watched: ${sourceChangeWatched.length}`);
     this.log.debug(`   Notify on First Boot: ${this.config.trawler.notifyOnFirstBoot ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stdout: ${this.config.trawler.console.stdout ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stderr: ${this.config.trawler.console.stderr ? 'Yes' : 'No'}`);
@@ -534,9 +535,16 @@ module.exports = class Trawler {
   }
 
   /*
-   * The 'ignored' handler for chokidar.
+   * The 'ignored' handler for Chokidar.
    */
   checkSourceChangeIgnoredFiles (checkPath, stats) {  // WARNING: must provide both arguments here for the method to get called.
+
+    // Check against each of the watched paths (these take precedence over everything else).
+    for (let w = 0, wlen = this.sourceChangeWatchedPaths.length; w < wlen; w++) {
+      const watchedPath = this.sourceChangeWatchedPaths[w];
+
+      if (checkPath.match(watchedPath)) { return false; }  // 'watchedPath' is either a string or a RegExp.
+    }
 
     // Ignore all .dot files
     if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
@@ -544,7 +552,7 @@ module.exports = class Trawler {
     // Ignore certain directories by default.
     if (checkPath.match(/\/?(?:node_modules|bower_components)/)) { return true; }
 
-    // Check against each of the ignored files.
+    // Check against each of the ignored paths.
     for (let i = 0, ilen = this.sourceChangeIgnoredPaths.length; i < ilen; i++) {
       const ignoredPath = this.sourceChangeIgnoredPaths[i];
 
@@ -557,19 +565,36 @@ module.exports = class Trawler {
   }
 
   /*
-   * Prevents the source change watcher from checking the given dir. Used by the file stream to prevent the logs dir
+   * Prevents the source change watcher from checking the given path. Used by the file stream to prevent the logs dir
    * from triggering app restarts. Either a string or RegExp can be passed in.
    * [Usage]
-   *  addIgnoredSourceDir('/path/to/dir');  // String.
-   *  addIgnoredSourceDir(/\/path\/to\/dir/);  // RegExp.
+   *  addIgnoredSourcePath('/path/to/ignore');  // String.
+   *  addIgnoredSourcePath(/\/path\/to\/ignore/);  // RegExp.
    */
-  addIgnoredSourceDir (dir) {
+  addIgnoredSourcePath (path) {
 
     // Skip if we aren't watching files for changes.
     if (!this.config.trawler.sourceChange.autoRestart) { return; }
 
-    // Add the dir to ignore.
-    if (this.sourceChangeIgnoredPaths.indexOf(dir) === -1) { this.sourceChangeIgnoredPaths.push(dir); }
+    // Add the path to ignore.
+    if (this.sourceChangeIgnoredPaths.indexOf(path) === -1) { this.sourceChangeIgnoredPaths.push(path); }
+
+  }
+
+  /*
+   * Forces the source change watcher to check the given path. Useful for overriding the default ignored files. Either a
+   * string or RegExp can be passed in.
+   * [Usage]
+   *  addWatchedSourcePath('/path/to/ignore');  // String.
+   *  addWatchedSourcePath(/\/path\/to\/ignore/);  // RegExp.
+   */
+  addWatchedSourcePath (path) {
+
+    // Skip if we aren't watching files for changes.
+    if (!this.config.trawler.sourceChange.autoRestart) { return; }
+
+    // Add the path to watched.
+    if (this.sourceChangeWatchedPaths.indexOf(path) === -1) { this.sourceChangeWatchedPaths.push(path); }
 
   }
 
@@ -807,6 +832,23 @@ module.exports = class Trawler {
       return next(null);
 
     });
+
+  }
+
+  /*
+   * Prepares each of the ignored or watched file paths to ensure RegExp strings are converted to RegExp objects.
+   */
+  prepareConfiguredPaths (list) {
+
+    const newList = [];
+
+    for (let i = 0, ilen = list.length; i < ilen; i++) {
+      const match = list[i].match(/^regexp:(?:([a-z]+):)?(.+)$/i);  // e.g. "regexp:i:[a-z]+"
+
+      newList.push(match ? new RegExp(match[2], match[1] || '') : list[i]);
+    }
+
+    return newList;
 
   }
 
