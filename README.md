@@ -205,7 +205,7 @@ You can show which file changes are being detected by using the `--watch-file-ev
 ### Notification Status Codes
 When Trawler notifies you it sends a status code to let you know what's happening:
 
-| Error Code        | Description |
+| Status Code       | Description |
 |-------------------|-------------|
 | app-first-boot    | Your application has booted successfully for the first time. |
 | app-crash         | Your application has crashed and been restarted. |
