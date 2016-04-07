@@ -1,4 +1,7 @@
 # Trawler (trawler-std)
+
+**NOTE: The config properties for Trawler 0.2.x have changed. Please update the package.json files in any apps that used an older version of Trawler.**
+
 Trawler (`npm install -g trawler-std`) is an application **supervisor** that sits in front of your Node app and performs a number of tasks including:
 * Capturing the console output (stdout) and console errors (stderr) of your app.
 * Streaming the output somewhere (e.g. to a file on disk).
@@ -22,11 +25,17 @@ To use Trawler do the following:
   "main":    "{filename}",
   ...
   "trawler": {
-    "restartOnCrash": true,  // Optional.
-    "restartOnSourceChange": true,  // Optional.
-    "maxCrashRestarts": 5,  // Optional, 0 = unlimited restarts, default = 0.
-    "pollSourceChanges": true,  // Optional, default = false.
-    "sourceChangeThreshold": 200,  // Optional, default = 500.
+    "crash": {
+      "autoRestart": true,  // Optional, default = false.
+      "maxRestarts": 3,  // Optional, default = 0, zero = unlimited restarts.
+      "waitSourceChange": true  // Optional, default = false.
+    },
+    "sourceChange": {
+      "autoRestart": true,  // Optional, default = false.
+      "usePolling": true,  // Optional, default = false.
+      "ignored": ["regexp:Dockerfile", "regexp:i:.*\\.md$"],  // Optional.
+      "watched": ["my_directory"]  // Optional.
+    },
     "console": {
       "stdout": true,  // Optional, default = false.
       "stderr": true  // Optional, default = false.
@@ -61,18 +70,31 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 
 ### Configuring Trawler
 
-| Property              | Default | Description |
-|-----------------------|---------|-------------|
-| restartOnCrash        | false   | Set `true` to automatically restart your app when it crashes. |
-| restartOnSourceChange | false   | Set `true` to automatically restart your app when the source files change. |
-| maxCrashRestarts      | 0       | The maximum number of times to restart your app when it crashes if `restartOnCrash` is `true`. 0 = unlimited restarts.
-| pollSourceChanges     | false   | Set `true` to manually check for file changes rather than relying on OS events. Drastically increases CPU usage but required for network shares and Docker volumes. |
-| sourceChangeThreshold | 500     | Time in milliseconds to wait for other file changes before reloading your app if `restartOnSourceChange` is `true`. Setting to a smaller number will result in (slightly) faster reloads but may lead to reloading multiple times if you change multiple files at once. |
+| Property                            | Default | Description |
+|-------------------------------------|---------|-------------|
+| crash.autoRestart                   | false   | Set `true` to automatically restart your app when it crashes. |
+| crash.maxRestarts                   | 0       | The maximum number of times to restart your app when it crashes if `restartOnCrash` is `true`. 0 = unlimited restarts. |
+| crash.waitSourceChange              | false   | Set `true` to prevent a crashed app from restarting until the source code has changed. Forces `sourceChange.autoRestart` to be `true`. |
+| sourceChange.autoRestart            | false   | Set `true` to automatically restart your app when the source files change. |
+| sourceChange.threshold              | 500     | Time in milliseconds to wait for other file changes before reloading your app if `restartOnSourceChange` is `true`. Setting to a smaller number will result in (slightly) faster reloads but may lead to reloading multiple times if you change multiple files at once. |
+| sourceChange.usePolling             | false   | Set `true` to manually check for file changes rather than relying on OS events. Required for network shares and Docker volumes. |
+| sourceChange.pollingIntervalDefault | 100     | When `usePolling` is `true` you can increase this value to reduce CPU usage when polling files (not including binary files). |
+| sourceChange.pollingIntervalBinary  | 300     | When `usePolling` is `true` you can increase this value to reduce CPU usage when polling binary files. |
+| sourceChange.ignored[]              |         | Specify an array of strings or regular expressions to ignore when watching for source file changes. |
+| sourceChange.watched[]              |         | Specify an array of strings or regular expressions to watch when watching for source file changes. This overrides the default ignored paths plus any you specify in `sourceChange.ignored`. |
 | notifyOnFirstBoot     | false   | Set `true` to send a notification the first time the app boots up. Useful for knowing when an app has successfully deployed and started. |
 | console.stdout        | false   | Set `true` to output your app's standard console output in the terminal. |
 | console.stderr        | false   | Set `true` to output your app's error console output in the terminal. |
 | streams[]             |         | Specify one or more streams (see below). |
 | notifications[]       |         | Specify one or more notifications (see below). |
+
+### RegExp Format for Ignored/Watched Source Files
+When specifying `sourceChange.ignored` or `sourceChange.watched` you can pass an array of strings if you know the exact path/file names, or you can pass a regular expression string like this: `"regexp:{flags}:{regexpString}"`. The flags are the same flags that `new RegExp()` expects and are optional. Backslashes must be escaped. Some examples:
+
+```javascript
+  "ignored": ["regexp:gi:[a-z]+", "regexp:i:.*\\.md$", "regexp:ops\\.log(?:.\\d+)?"],
+  "watched": ["my_directory"]
+```
 
 ### Configuring Streams and Notifications
 Trawler grabs the output of your app but it needs to know what to do with it. Streams are Trawler's way of knowing where to send the data once it has it and are usually used for logging to disk. Notifications are how Trawler notifies you of problems for example sending a Slack notification. You can have multiple streams/notifications of the same type.
@@ -195,6 +217,4 @@ When Trawler notifies you it sends a status code to let you know what's happenin
 ### Known Issues
 * Changing Trawler's configuration in `package.json` on the fly will not work, despite Trawler reloading your application if `restartOnSourceChange` is set.
 * It's currently not possible for a stream to handle **only** the stdout or stderr of your app. Each stream will receive a combined stream of both.
-* It's currently not possible to wait to restart your crashed app until source files have been changed (like Nodemon), instead Trawler will restart your app immediately when it crashes.
 * If an error occurs in the file stream and `crashOnError` is `true`, you'll only receive the error stack in the notification and not the explanation message.
-* It's currently not possible to specify specific paths to ignore or watch when watching for source changes.
