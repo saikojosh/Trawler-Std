@@ -6,10 +6,12 @@ Trawler (`npm install -g trawler-std`) is an application **supervisor** that sit
 * Capturing the console output (stdout) and console errors (stderr) of your app.
 * Streaming the output somewhere (e.g. to a file on disk).
 * Daily log file rotation using the same naming convention as [Bunyan](https://www.npmjs.com/package/bunyan).
+* Optionally pass your app's stdout and stderr to the terminal.
 * Sending admin notifications on app crash (e.g. Slack).
-* Automatically restarting your app after a crash.
+* Automatically restarting your app after a crash (or optionally waiting for source code changes).
 * Automatically restarting your app when source code changes.
-* Supports watching for source code changes on network shares and Docker volumes with `pollSourceChanges: true`.
+* Supports watching for source code changes on network shares and Docker volumes.
+* Supports ignoring or watching specific source file paths (as strings or regular expressions).
 
 Trawler is production ready, and great for development too. It's also been built with Docker containers as one of the primary use cases.
 
