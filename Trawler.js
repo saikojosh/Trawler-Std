@@ -183,8 +183,8 @@ module.exports = class Trawler {
     this.log.debug(`   Source Change Threshold: ${sourceChangeThreshold} ms`);
     this.log.debug(`   Polling Interval Default: ${pollingIntervalDefault} ms`);
     this.log.debug(`   Polling Interval Binary: ${pollingIntervalBinary} ms`);
-    this.log.debug(`   Source Change Ignored: ${sourceChangeIgnored.length}`);
-    this.log.debug(`   Source Change Watched: ${sourceChangeWatched.length}`);
+    this.log.debug(`   Source Change Ignored: ${sourceChangeIgnored.length} items`);
+    this.log.debug(`   Source Change Watched: ${sourceChangeWatched.length} items`);
     this.log.debug(`   Notify on First Boot: ${this.config.trawler.notifyOnFirstBoot ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stdout: ${this.config.trawler.console.stdout ? 'Yes' : 'No'}`);
     this.log.debug(`   Console stderr: ${this.config.trawler.console.stderr ? 'Yes' : 'No'}`);
