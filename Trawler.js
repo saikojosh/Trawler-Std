@@ -65,6 +65,17 @@ module.exports = class Trawler {
 
     // Initliase logger.
     this.log = new Logger(this.config.debug);
+
+    // Are we in 'info mode'?
+    if (this.config.cliArgs.indexOf('-i') > -1 || this.config.cliArgs.indexOf('--info') > -1 || this.config.cliArgs.indexOf('-v') > -1 || this.config.cliArgs.indexOf('--version') > -1) {
+      this.log.title('Trawler Information');
+      this.log.important(`Version:     ${packageJSON.version}`);
+      this.log.important(`Working Dir: ${process.cwd()}`);
+      this.log.important(`App Name:    ${this.config.app.name || 'N/A'}`);
+      process.exit(0);
+    }
+
+    // Initial log out.
     this.log.title(`[Trawler v${packageJSON.version}] ${this.config.app.name} v${this.config.app.version}`);
 
     // We can't run ourselves.
