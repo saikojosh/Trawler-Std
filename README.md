@@ -97,8 +97,8 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 When specifying `sourceChange.ignored` or `sourceChange.watched` you can pass an array of strings if you know the exact path/file names, or you can pass a regular expression string like this: `"regexp:{flags}:{regexpString}"`. The flags are the same flags that `new RegExp()` expects and are optional. Backslashes must be escaped. Some examples:
 
 ```javascript
-  "ignored": ["regexp:gi:[a-z]+", "regexp:i:.*\\.md$", "regexp:ops\\.log(?:.\\d+)?"],
-  "watched": ["my_directory"]
+"ignored": ["regexp:gi:[a-z]+", "regexp:i:.*\\.md$", "regexp:ops\\.log(?:.\\d+)?"],
+"watched": ["my_directory"]
 ```
 
 ### Configuring Streams and Notifications
@@ -139,6 +139,7 @@ Sends a notification to a Slack channel when your app crashes.
 ## Command Line Arguments
 You can use the following arguments when running Trawler:
 
+* `-i` `--info` - Outputs some information about Trawler in the command line and then quits.
 * `-d` `--debug` - Make Trawler output more detail on the command line - great for debugging during development and setting up inside Docker containers.
 * `-e` `--env` - Override the environment that Trawler is running in, i.e. specify 'development', 'staging', 'production', or any other environment string your app uses. Trawler will pass the argument `--env myEnvString` to your app, which can then choose to respect this or not.
 * `--stdout` - Display your application's stdout in the console.
