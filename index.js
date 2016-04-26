@@ -2,16 +2,16 @@
 'use strict';
 
 /*
- * TRAWLER (entry point).
+ * TRAWLER-STD (entry point).
  */
 
 const packageJSON = require('./package.json');
 const appPackageJSON = require('./modules/appPackageJSON');
 const extender = require('object-extender');
-const Trawler = require('./Trawler');
+const TrawlerStd = require('./TrawlerStd');
 
 // Prepare Trawler.
-const boat = new Trawler({
+const boat = new TrawlerStd({
   app: {
     name: appPackageJSON.name,
     version: appPackageJSON.version,

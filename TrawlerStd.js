@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * TRAWLER (class).
+ * TRAWLER-STD (class).
  */
 
 const spawn = require('child_process').spawn;
@@ -14,7 +14,7 @@ const moment = require('moment');
 const packageJSON = require('./package.json');
 const Logger = require('./modules/Logger');
 
-module.exports = class Trawler {
+module.exports = class TrawlerStd {
 
   /*
    * Constructor.
