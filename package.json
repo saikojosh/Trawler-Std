@@ -1,10 +1,10 @@
 {
   "repository": {
     "type": "git",
-    "url": "https://github.com/saikojosh/Trawler.git"
+    "url": "https://github.com/saikojosh/Trawler-Std.git"
   },
   "bugs": {
-    "url": "https://github.com/saikojosh/Trawler/issues"
+    "url": "https://github.com/saikojosh/Trawle-Std/issues"
   },
   "name": "trawler-std",
   "version": "0.2.3",
