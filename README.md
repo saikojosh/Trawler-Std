@@ -1,8 +1,8 @@
-# Trawler (trawler-std)
+# Trawler-Std
 
 **NOTE: The config properties for Trawler 0.2.x have changed. Please update the package.json files in any apps that used an older version of Trawler.**
 
-Trawler (`npm install -g trawler-std`) is an application **supervisor** that sits in front of your Node app and performs a number of tasks including:
+Trawler-Std (`npm install -g trawler-std`) is an application **supervisor** that sits in front of your Node app and performs a number of tasks including:
 * Capturing the console output (stdout) and console errors (stderr) of your app.
 * Streaming the output somewhere (e.g. to a file on disk).
 * Daily log file rotation using the same naming convention as [Bunyan](https://www.npmjs.com/package/bunyan).
