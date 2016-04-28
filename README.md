@@ -93,20 +93,14 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 | streams[]             |         | Specify one or more streams (see below). |
 | notifications[]       |         | Specify one or more notifications (see below). |
 
-### RegExp Format for Ignored/Watched Source Files
-When specifying `sourceChange.ignored` or `sourceChange.watched` you can pass an array of strings if you know the exact path/file names, or you can pass a regular expression string like this: `"regexp:{flags}:{regexpString}"`. The flags are the same flags that `new RegExp()` expects and are optional. Backslashes must be escaped. Some examples:
-
-```javascript
-"ignored": ["regexp:gi:[a-z]+", "regexp:i:.*\\.md$", "regexp:ops\\.log(?:.\\d+)?"],
-"watched": ["my_directory"]
-```
-
 ### Configuring Streams and Notifications
 Trawler grabs the output of your app but it needs to know what to do with it. Streams are Trawler's way of knowing where to send the data once it has it and are usually used for logging to disk. Notifications are how Trawler notifies you of problems for example sending a Slack notification. You can have multiple streams/notifications of the same type.
 
 | Property              | Default | Description |
 |-----------------------|---------|-------------|
 | type                  |         | The type of stream/notification e.g. `file` or `slack`. |
+| id                    |         | Optional - specify an ID to make it easier to identify the stream/notification in the debug logs. |
+| disabled              | false   | Set `true` to turn off this stream/notification. |
 | environments[]        |         | To **limit** this stream/notification to run **only** in specific environments, specify an array of environment strings. By default streams/notifications will run in all environments. |
 | excludeEnvironments[] |         | To **prevent** this stream/notification from running in specific environments, specify an array of environments strings. |
 
@@ -206,7 +200,20 @@ When watching for source file changes Trawler will watch all files and directori
 * The `node_modules` directory.
 * The `bower_components` directory.
 
-You can show which file changes are being detected by using the `--watch-file-events` CLI argument.
+You can see which file changes are being detected by using the `--watch-file-events` CLI argument.
+
+### Ignored/Watched Source Files - String/RegExp Format
+When specifying `sourceChange.ignored` or `sourceChange.watched` you can pass an array of strings if you know the exact path/file names, or you can pass a regular expression string like this: `"regexp:{flags}:{regexpString}"`. The flags are the same flags that `new RegExp()` expects and are optional.
+
+* Backslashes must be escaped.
+* Paths are like `package.json`, `config` and `config/routes.js`, i.e. there are no leading or trailing slashes.
+* You can ignore all paths with the regular expression `regexp:i:.+`.
+* Any paths you specify in `watched` will override the ignore paths, including the default ignored paths.
+
+```javascript
+"ignored": ["regexp:gi:[a-z]+", "regexp:i:.*\\.md$", "regexp:ops\\.log(?:.\\d+)?"],
+"watched": ["my_directory"]
+```
 
 ### Notification Status Codes
 When Trawler notifies you it sends a status code to let you know what's happening:
