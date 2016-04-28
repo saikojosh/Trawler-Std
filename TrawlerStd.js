@@ -716,7 +716,7 @@ module.exports = class TrawlerStd {
 
     // Skip if we have no notifications to send.
     if (!this.config.trawler.notifications || !this.config.trawler.notifications.length) {
-      this.log.debug('Unable to send notifications as no services have been specified.');
+      this.log.debug('Unable to send notifications as no services are enabled.');
       return callback(null);
     }
 
