@@ -585,6 +585,9 @@ module.exports = class TrawlerStd {
    */
   checkSourceChangeIgnoredFiles (checkPath, stats) {  // WARNING: must provide both arguments here for the method to get called.
 
+    // We never ignore the . path as this will ignore everything!
+    if (checkPath === '.') { return false; }
+
     // Check against each of the watched paths (these take precedence over everything else).
     for (let w = 0, wlen = this.sourceChangeWatchedPaths.length; w < wlen; w++) {
       const watchedPath = this.sourceChangeWatchedPaths[w];
@@ -592,7 +595,7 @@ module.exports = class TrawlerStd {
       if (checkPath.match(watchedPath)) { return false; }  // 'watchedPath' is either a string or a RegExp.
     }
 
-    // Ignore all .dot files
+    // Ignore all .dot files.
     if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
 
     // Ignore certain directories by default.
