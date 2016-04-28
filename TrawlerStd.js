@@ -274,7 +274,7 @@ module.exports = class TrawlerStd {
     if (!this.config.trawler[what]) { return finish(null); }
     async.forEachOf(this.config.trawler[what], (itemConfig, index, nextItem) => {
 
-      this.log.debug(`>> ${itemConfig.type}...`);
+      this.log.debug(`>> ${itemConfig.type}${itemConfig.id ? ` [${itemConfig.id}]` : ''}...`);
 
       const envList = itemConfig.environments;
       const exludeEnvList = itemConfig.excludeEnvironments;
@@ -725,11 +725,10 @@ module.exports = class TrawlerStd {
     // Notify each endpoint in turn.
     async.each(this.config.trawler.notifications, (notification, next) => {
 
+      this.log.debug(`>> ${notification.cfg.type}${notification.cfg.id ? ` [${notification.cfg.id}]` : ''}...`);
+
       // If Trawler itself crashes before notifications are initialised.
-      if (notification.isInitialised) {
-        this.log.debug(`>> ${notification.cfg.type}`);
-      } else {
-        this.log.debug(`>> ${notification.type}`);
+      if (!notification.isInitialised) {
         this.log.debug('   Unable to send notification as the provider has not been initialised yet.');
         return next(null);
       }
