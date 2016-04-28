@@ -279,6 +279,13 @@ module.exports = class TrawlerStd {
       const envList = itemConfig.environments;
       const exludeEnvList = itemConfig.excludeEnvironments;
 
+      // Disabled flag check.
+      if (itemConfig.disabled) {
+        this.log.debug('   Disabled due to "disabled" property.');
+        this.config.trawler[what][index] = null;
+        return nextItem(null);
+      }
+
       // Positive environment check: the current environment must be in the stream/notification's "environments"
       // property OR no "environments" property specified.
       if (envList && envList.length && envList.indexOf(this.config.app.env) === -1) {
