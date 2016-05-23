@@ -78,6 +78,7 @@ module.exports = class TrawlerStd {
       this.log.important(`Version:     ${packageJSON.version}`);
       this.log.important(`Working Dir: ${process.cwd()}`);
       this.log.important(`App Name:    ${this.config.app.name || 'N/A'}`);
+      this.log.important(`CLI Args:    ${this.config.cliArgs.join(' ')}`);
       process.exit(0);
     }
 
@@ -91,6 +92,9 @@ module.exports = class TrawlerStd {
       this.log.error('  $ trawler');
       process.exit(1);
     }
+
+    // Log out the CLI arguments.
+    if (this.config.debug) { this.log.debug(`CLI arguments: ${this.config.cliArgs.join(' ') || 'N/A'}`); }
 
     // Are we overriding the environment from the CLI?
     const envArgIndex = (this.config.cliArgs.indexOf('-e') > -1 ? this.config.cliArgs.indexOf('-e') : this.config.cliArgs.indexOf('--env'));
