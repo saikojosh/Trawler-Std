@@ -12,9 +12,10 @@ module.exports = class Logger {
   /*
    * Setup the logger.
    */
-  constructor (debug) {
+  constructor (debug, cliColours) {
     this.cfg = {
       debug,
+      cliColours,
     };
   }
 
@@ -72,8 +73,13 @@ module.exports = class Logger {
    * Allows us to log to the console in any colour we want.
    */
   logAsColour (colour, _styles, method, _arguments) {
-    const styles = (typeof _styles === 'string' ? [_styles] : _styles) || [];
+
     const args = Array.prototype.slice.call(_arguments);
+
+    // Just output the string if colours have been disabled.
+    if (!this.cfg.cliColours) { return console[method](args.join(' ')); }  // Node doesn't support the spread operator without the harmony flag yet.
+
+    const styles = (typeof _styles === 'string' ? [_styles] : _styles) || [];
     const colourMatch = colour.match(/^([a-z]+)(?::(\d+))?$/i);
     const colourFn = (colourMatch[2] === 'xterm' ? clc.xterm(colourMatch[2]) : clc[colourMatch[1]]);
     const output = [];

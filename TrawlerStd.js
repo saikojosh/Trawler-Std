@@ -49,6 +49,7 @@ module.exports = class TrawlerStd {
           watched: [],
         },
         notifyOnFirstBoot: false,
+        cliColours: true,
         console: {
           stdout: false,
           stderr: false,
@@ -63,8 +64,13 @@ module.exports = class TrawlerStd {
     // Are we in debug mode?
     this.config.debug = Boolean(this.config.cliArgs.indexOf('-d') > -1 || this.config.cliArgs.indexOf('--debug') > -1);
 
+    // Are we overriding the cliColours option via the CLI? (MUST be before the logger is initialised).
+    if (this.config.cliArgs.indexOf('-p') > -1 || this.config.cliArgs.indexOf('--plain') > -1) {
+      this.config.trawler.cliColours = false;
+    }
+
     // Initliase logger.
-    this.log = new Logger(this.config.debug);
+    this.log = new Logger(this.config.debug, this.config.trawler.cliColours);
 
     // Are we in 'info mode'?
     if (this.config.cliArgs.indexOf('-i') > -1 || this.config.cliArgs.indexOf('--info') > -1 || this.config.cliArgs.indexOf('-v') > -1 || this.config.cliArgs.indexOf('--version') > -1) {
