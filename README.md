@@ -88,6 +88,7 @@ It's very easy to configure Trawler, there's no need to use CLI arguments or set
 | sourceChange.ignored[]              |         | Specify an array of strings or regular expressions to ignore when watching for source file changes. |
 | sourceChange.watched[]              |         | Specify an array of strings or regular expressions to watch when watching for source file changes. This overrides the default ignored paths plus any you specify in `sourceChange.ignored`. |
 | notifyOnFirstBoot     | false   | Set `true` to send a notification the first time the app boots up. Useful for knowing when an app has successfully deployed and started. |
+| cliColours            | true    | Set 'false' to prevent Trawler from formatting its console output with colours. |
 | console.stdout        | false   | Set `true` to output your app's standard console output in the terminal. |
 | console.stderr        | false   | Set `true` to output your app's error console output in the terminal. |
 | streams[]             |         | Specify one or more streams (see below). |
@@ -136,6 +137,7 @@ You can use the following arguments when running Trawler:
 * `-i` `--info` - Outputs some information about Trawler in the command line and then quits.
 * `-d` `--debug` - Make Trawler output more detail on the command line - great for debugging during development and setting up inside Docker containers.
 * `-e` `--env` - Override the environment that Trawler is running in, i.e. specify 'development', 'staging', 'production', or any other environment string your app uses. Trawler will pass the argument `--env myEnvString` to your app, which can then choose to respect this or not.
+* `-p` `--plain` - Prevent Trawler from formatting its console output with colours.
 * `--stdout` - Display your application's stdout in the console.
 * `--stderr` - Display your application's stderr in the console.
 * `--stdall` - Display both the stdout and stderr in the console.
