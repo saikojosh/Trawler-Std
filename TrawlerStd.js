@@ -117,7 +117,8 @@ module.exports = class TrawlerStd {
     }
 
     // Are we outputting the filesystem watch events.
-    this.debugWatchEvents = Boolean(this.config.cliArgs.indexOf('--debug-watch-events') > -1);
+    this.debugWatchEvents = Boolean(this.config.cliArgs.indexOf('--debug-watch-events') > -1 || this.config.cliArgs.indexOf('--debug-watch-events-full') > -1);
+    this.debugWatchEventsFull = Boolean(this.config.cliArgs.indexOf('--debug-watch-events-full') > -1);
 
     // Force the source to be watched if we are waiting for source changes before restarting on crash.
     if (this.config.trawler.crash.waitSourceChange) { this.config.trawler.sourceChange.autoRestart = true; }
@@ -608,30 +609,54 @@ module.exports = class TrawlerStd {
    */
   checkSourceChangeIgnoredFiles (checkPath, stats) {  // WARNING: must provide both arguments here for the method to get called.
 
+    if (this.debugWatchEventsFull) { this.log.debug(`Checking Path: ${checkPath}`); }
+
     // We never ignore the . path as this will ignore everything!
-    if (checkPath === '.') { return false; }
+    if (checkPath === '.') {
+      if (this.debugWatchEventsFull) { this.log.debug('   Watched!'); }
+      return false;
+    }
 
     // Check against each of the watched paths (these take precedence over everything else).
     for (let w = 0, wlen = this.sourceChangeWatchedPaths.length; w < wlen; w++) {
       const watchedPath = this.sourceChangeWatchedPaths[w];
 
-      if (checkPath.match(watchedPath)) { return false; }  // 'watchedPath' is either a string or a RegExp.
+      if (this.debugWatchEventsFull) { this.log.debug(`   Checking Watched Path: ${watchedPath}`); }
+
+      if (checkPath.match(watchedPath)) {  // 'watchedPath' is either a string or a RegExp.
+        if (this.debugWatchEventsFull) { this.log.debug('   Watched!'); }
+        return false;
+      }
     }
 
     // Ignore all .dot files.
-    if (checkPath.match(/(?:^\/?|.*\/)\..+/)) { return true; }
+    if (this.debugWatchEventsFull) { this.log.debug('   Checking Dot Files...'); }
+    if (checkPath.match(/(?:^\/?|.*\/)\..+/)) {
+      if (this.debugWatchEventsFull) { this.log.debug('   Ignored!'); }
+      return true;
+    }
 
     // Ignore certain directories by default.
-    if (checkPath.match(/\/?(?:node_modules|bower_components)/)) { return true; }
+    if (this.debugWatchEventsFull) { this.log.debug('   Checking Default Ignored Directories...'); }
+    if (checkPath.match(/\/?(?:node_modules|bower_components)/)) {
+      if (this.debugWatchEventsFull) { this.log.debug('   Ignored!'); }
+      return true;
+    }
 
     // Check against each of the ignored paths.
     for (let i = 0, ilen = this.sourceChangeIgnoredPaths.length; i < ilen; i++) {
       const ignoredPath = this.sourceChangeIgnoredPaths[i];
 
-      if (checkPath.match(ignoredPath)) { return true; }  // 'ignoredPath' is either a string or a RegExp.
+      if (this.debugWatchEventsFull) { this.log.debug(`   Checking Ignored Path: ${ignoredPath}`); }
+
+      if (checkPath.match(ignoredPath)) {  // 'ignoredPath' is either a string or a RegExp.
+        if (this.debugWatchEventsFull) { this.log.debug('   Ignored!'); }
+        return true;
+      }
     }
 
-    // This path is allowed.
+    // By default all paths are allowed.
+    if (this.debugWatchEventsFull) { this.log.debug('   Watched By Default!'); }
     return false;
 
   }
