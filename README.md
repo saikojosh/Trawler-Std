@@ -142,6 +142,7 @@ You can use the following arguments when running Trawler:
 * `--stderr` - Display your application's stderr in the console.
 * `--stdall` - Display both the stdout and stderr in the console.
 * `--debug-watch-events` - Output extra information on the filesystem events when watching for source file changes.
+* `--debug-watch-events-full` - Outputs a lot of extra information on the filesystem events when watching for source file changes. Only one of the debug watch events flags are required.
 
 ## Comparison of Trawler, Forever and Nodemon
 
