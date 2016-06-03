@@ -231,6 +231,6 @@ When Trawler notifies you it sends a status code to let you know what's happenin
 | trawler-error     | Same as `trawler-crash` except Trawler has recovered from the problem without crashing. |
 
 ### Known Issues
-* Changing Trawler's configuration in `package.json` on the fly will not work, despite Trawler reloading your application if `restartOnSourceChange` is set.
+* Changing Trawler's configuration in `package.json` on the fly will not work, despite Trawler reloading your application if `sourceChange.autoRestart` is set.
 * It's currently not possible for a stream to handle **only** the stdout or stderr of your app. Each stream will receive a combined stream of both.
 * If an error occurs in the file stream and `crashOnError` is `true`, you'll only receive the error stack in the notification and not the explanation message.
