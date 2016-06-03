@@ -149,6 +149,7 @@ module.exports = class TrawlerStd {
       if (envList && envList.length && envList.indexOf(this.config.app.env) === -1) {
         this.sourceChangeDisabledByEnvs = 'environments';
         this.config.trawler.sourceChange.autoRestart = false;
+        this.config.trawler.crash.waitSourceChange = false;
       }
 
       // Negative environment check: the current environment must not be in the source change's "excludeEnvironments"
@@ -156,6 +157,7 @@ module.exports = class TrawlerStd {
       if (exludeEnvList && exludeEnvList.length && exludeEnvList.indexOf(this.config.app.env) > -1) {
         this.sourceChangeDisabledByEnvs = 'excludeEnvironments';
         this.config.trawler.sourceChange.autoRestart = false;
+        this.config.trawler.crash.waitSourceChange = false;
       }
 
     }
