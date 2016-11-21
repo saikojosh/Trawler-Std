@@ -68,8 +68,5 @@
     "node-fetch": "1.3.x",
     "object-extender": "1.2.x"
   },
-  "license": "MIT",
-  "engines": {
-    "node": "5.x"
-  }
+  "license": "MIT"
 }
