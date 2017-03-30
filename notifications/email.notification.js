@@ -74,7 +74,7 @@ module.exports = class EmailNotification extends NotificationBase {
 			this.client.sendEmail({
 				From: this.cfg.fromEmail,
 				To: this.cfg.notificationAddresses.join(','),
-				Subject: `Alert from ${appName}!`,
+				Subject: `[Trawler] Alert from "${appName}"!`,
 				HtmlBody: `<div style="font-family: Verdana; font-size: 13px; line-height: 1.65;">${htmlBody}</div>`,
 			}, (err, result) => {
 				if (err) { return finish(err); }
