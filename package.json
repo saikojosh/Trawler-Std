@@ -67,7 +67,6 @@
     "markdown": "0.5.x",
     "moment": "2.11.x",
     "node-fetch": "1.3.x",
-    "node-promisify": "1.2.x",
     "object-extender": "1.2.x",
     "postmark": "1.3.x"
   },

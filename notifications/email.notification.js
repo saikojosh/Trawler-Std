@@ -7,7 +7,6 @@
 
 const markdown = require('markdown').markdown;
 const postmark = require('postmark');
-const promisify = require('node-promisify');
 const NotificationBase = require('./Notification');
 
 module.exports = class EmailNotification extends NotificationBase {
@@ -45,7 +44,7 @@ module.exports = class EmailNotification extends NotificationBase {
 		this.log.debug(`   Initialising ${this.cfg.type} notification...`);
 
 		switch (this.cfg.provider) {
-			case 'postmark': this.client = promisify(new postmark.Client(this.cfg.apiKey)); break;
+			case 'postmark': this.client = new postmark.Client(this.cfg.apiKey); break;
 			default: return finish(new Error('Invalid email provider specified.'));
 		}
 
@@ -75,8 +74,6 @@ module.exports = class EmailNotification extends NotificationBase {
 				Subject: `Alert from ${appName}!`,
 				HtmlBody: htmlBody,
 			})
-				.then(() => finish(null))
-				.catch((err) => finish(err));
 
 		});
 
