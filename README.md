@@ -128,6 +128,18 @@ Sends a notification to a Slack channel when your app crashes.
 | iconEmoji   | "\:anchor\:" :anchor: | Specify a custom Slack emoji to use next to the username in Slack. |
 | attention[] |           | Specify an array of Slack usernames to notify. The '@' is optional. |
 
+##### Email:
+Sends a notification to one or more email addresses when your app crashes.
+
+| Property                | Default   | Description |
+|-------------------------|-----------|-------------|
+| provider*                |           | The ID of the transactional email provider to use (see below). |
+| apiKey                  |           | The API key to use with your email provider.  |
+| notificationAddresses[] |           | An array of email addresses to send notifications to. |
+| fromEmail               |           | The email address the notifications should be sent from. |
+
+\*Currently Trawler only supports [Postmark](https://postmarkapp.com/).
+
 
 ## Command Line Arguments
 You can use the following arguments when running Trawler:
