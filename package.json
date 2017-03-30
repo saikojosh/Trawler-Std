@@ -7,7 +7,7 @@
     "url": "https://github.com/saikojosh/Trawle-Std/issues"
   },
   "name": "trawler-std",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "A simple supervisor utility which monitors the status of your Node app, streams the console output somewhere, notifies an endpoint, and restarts your app on failure or source code change.",
   "keywords": [
     "console",
