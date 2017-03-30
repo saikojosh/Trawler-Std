@@ -64,15 +64,22 @@ module.exports = class EmailNotification extends NotificationBase {
 
 			if (err) { return finish(err); }
 
-			// Create the email body.
-			const htmlBody = markdown.toHTML(_text);
+			// Create and style the email body.
+			const htmlBody = _text
+				.replace(/\n/g, '<br>')
+				.replace(/\*(.+?)\*/g, '<b>$1</b>')
+				.replace(/```(.+?)```/g, '<div style="border: 1px solid #ccc; background: #eee; padding: 10px; font-family: Courier New, Courier;">$1</div>')
+				.replace(/`(.+?)`/g, '<span style="background: #ffcbcb; padding: 1px 3px; margin: 0 2px; border-radius: 4px;">$1</span>');
 
-			// Send the notification to all the addresses at once.
+			// Send the notification to all the notification addresses at once.
 			this.client.sendEmail({
 				From: this.cfg.fromEmail,
 				To: this.cfg.notificationAddresses.join(','),
 				Subject: `Alert from ${appName}!`,
-				HtmlBody: htmlBody,
+				HtmlBody: `<div style="font-family: Verdana; font-size: 13px; line-height: 1.65;">${htmlBody}</div>`,
+			}, (err, result) => {
+				if (err) { return finish(err); }
+				return finish(null);
 			})
 
 		});
