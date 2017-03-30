@@ -58,6 +58,8 @@ module.exports = class SlackNotification extends NotificationBase {
 
     super.send(_options, _finish, (err, options, finish, appName, mode, version, _text) => {
 
+      if (err) { return finish(err); }
+
       let attention = (Array.isArray(this.cfg.attention) ? this.cfg.attention : (typeof this.cfg.attention === 'string' ? [this.cfg.attention] : null));
       let text = _text;
 
