@@ -165,6 +165,7 @@ module.exports = class TrawlerStd {
     // Notification providers.
     this.notifications = {
       slack: require('./notifications/slack.notification.js'),
+      email: require('./notifications/email.notification.js'),
     };
 
     // Streams.
