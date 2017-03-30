@@ -5,7 +5,6 @@
  * Notifies an email address.
  */
 
-const markdown = require('markdown').markdown;
 const postmark = require('postmark');
 const NotificationBase = require('./Notification');
 
