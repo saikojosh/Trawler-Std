@@ -76,10 +76,10 @@ module.exports = class EmailNotification extends NotificationBase {
 				To: this.cfg.notificationAddresses.join(','),
 				Subject: `[Trawler] Alert from "${appName}"!`,
 				HtmlBody: `<div style="font-family: Verdana; font-size: 13px; line-height: 1.65;">${htmlBody}</div>`,
-			}, (err, result) => {
+			}, (err/* , result */) => {
 				if (err) { return finish(err); }
 				return finish(null);
-			})
+			});
 
 		});
 
